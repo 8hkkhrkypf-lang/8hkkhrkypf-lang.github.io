@@ -1,8 +1,146 @@
 <!DOCTYPE html>
-<html>
-<head><title>我的博客</title></head>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLNB 的小站</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0b1020;
+    color: #e2e8f0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* 背景光斑装饰 */
+  .glow {
+    position: fixed; border-radius: 50%;
+    filter: blur(90px); opacity: .35; z-index: 0; pointer-events: none;
+  }
+  .glow1 { width: 300px; height: 300px; background: #6366f1; top: -80px; right: -60px; }
+  .glow2 { width: 260px; height: 260px; background: #06b6d4; bottom: -60px; left: -80px; }
+
+  .container { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 60px 24px 40px; }
+
+  /* 头部 */
+  header { text-align: center; margin-bottom: 60px; animation: fadeUp .8s ease both; }
+  .avatar {
+    width: 88px; height: 88px; margin: 0 auto 20px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    background: linear-gradient(135deg, #6366f1, #06b6d4);
+    box-shadow: 0 0 40px rgba(99, 102, 241, .5);
+  }
+  h1 {
+    font-size: 2rem; letter-spacing: 1px;
+    background: linear-gradient(90deg, #a5b4fc, #67e8f9);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .bio { margin-top: 12px; color: #94a3b8; font-size: .95rem; line-height: 1.8; }
+
+  /* 分区标题 */
+  .section-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.15rem; margin: 40px 0 20px; color: #cbd5e1;
+    animation: fadeUp .8s .2s ease both;
+  }
+  .section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #334155, transparent); }
+
+  /* 工具卡片网格 */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+
+  .card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 20px;
+    text-decoration: none; color: inherit;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    animation: fadeUp .8s ease both;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(103, 232, 249, .5);
+    box-shadow: 0 10px 30px rgba(6, 182, 212, .15);
+  }
+  .card .icon { font-size: 30px; margin-bottom: 12px; }
+  .card h3 { font-size: 1.05rem; margin-bottom: 6px; color: #f1f5f9; }
+  .card p { font-size: .85rem; color: #94a3b8; line-height: 1.6; }
+  .card .tag {
+    display: inline-block; margin-top: 12px; font-size: .72rem;
+    color: #67e8f9; background: rgba(6,182,212,.1);
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  footer {
+    margin-top: 70px; text-align: center;
+    color: #64748b; font-size: .8rem; line-height: 2;
+    animation: fadeUp .8s .4s ease both;
+  }
+  footer a { color: #94a3b8; text-decoration: none; }
+  footer a:hover { color: #67e8f9; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
 <body>
-    <h1>你好，世界！</h1>
-    <p>这是我的第一个博客页面。</p>
+
+<div class="glow glow1"></div>
+<div class="glow glow2"></div>
+
+<div class="container">
+
+  <!-- ========== 头部：改你的名字和简介就改这里 ========== -->
+  <header>
+    <div class="avatar">🧊</div>
+    <h1>GLNB 的小站</h1>
+    <p class="bio">折腾网页的业余选手 · 偶尔搓点小工具<br>这里是我在互联网上的自留地。</p>
+  </header>
+
+  <!-- ========== 工具箱 ========== -->
+  <div class="section-title">🧰 工具箱</div>
+  <div class="grid">
+
+    <!-- ↓↓↓ 复制这一整块 <a>...</a>，改文字和链接，就能加一个新工具 ↓↓↓ -->
+    <a class="card" href="https://glnb.cloud-ip.cc" >
+      <div class="icon">🧪</div>
+      <h3>第一个工具</h3>
+      <p>这里写一句话介绍这个工具是干嘛的。</p>
+      <span class="tag">试用 →</span>
+    </a>
+    <!-- ↑↑↑ 复制到这里为止 ↑↑↑ -->
+
+    <a class="card" href="#">
+      <div class="icon">⏱️</div>
+      <h3>敬请期待</h3>
+      <p>下一个工具正在脑袋里构思中。</p>
+      <span class="tag">施工中</span>
+    </a>
+
+    <a class="card" href="#">
+      <div class="icon">📦</div>
+      <h3>敬请期待</h3>
+      <p>灵感收集箱，想到什么搓什么。</p>
+      <span class="tag">施工中</span>
+    </a>
+
+    <a class="card" href="#">
+      <div class="icon">🎲</div>
+      <h3>敬请期待</h3>
+      <p>随缘更新，不定期上新。</p>
+      <span class="tag">施工中</span>
+    </a>
+
+  </div>
+
+  <footer>
+    <p>© 2026 GLNB · Powered by GitHub Pages</p>
+    <p><a href="https://github.com/8hkkhrkypf-lang" target="_blank">GitHub 主页</a></p>
+  </footer>
+
+</div>
+
 </body>
 </html>
