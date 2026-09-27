@@ -15,6 +15,12 @@
   .avatar { width: 88px; height: 88px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; background: linear-gradient(135deg, #6366f1, #06b6d4); box-shadow: 0 0 40px rgba(99, 102, 241, .5); }
   h1 { font-size: 2rem; letter-spacing: 1px; background: linear-gradient(90deg, #a5b4fc, #67e8f9); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .bio { margin-top: 12px; color: #94a3b8; font-size: .95rem; line-height: 1.8; }
+  
+  /* 新增的提示框样式 */
+  .notice { margin-top: 20px; font-size: .85rem; color: #a5b4fc; background: rgba(99,102,241,.15); padding: 12px 16px; border-radius: 12px; display: inline-block; border: 1px solid rgba(99,102,241,.3); line-height: 1.6; text-align: left; }
+  .notice a { color: #67e8f9; text-decoration: none; word-break: break-all; }
+  .notice a:hover { text-decoration: underline; }
+
   .section-title { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; margin: 40px 0 20px; color: #cbd5e1; }
   .section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #334155, transparent); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
@@ -35,14 +41,20 @@
     <div class="avatar">🧊</div>
     <h1>GLNB 的小站</h1>
     <p class="bio">折腾网页的业余选手 · 在线运行我搓的各种小工具</p>
+    
+    <!-- 这里就是你要求的提示语 -->
+    <div class="notice">
+      📢 部分工具在 GitHub 仓库首页，请移步至 <a href="https://github.com/8hkkhrkypf-lang/8hkkhrkypf-lang.github.io" target="_blank">github.com/8hkkhrkypf-lang/8hkkhrkypf-lang.github.io</a> 查看
+    </div>
+    
   </header>
   <div class="section-title">🧰 工具箱</div>
   <div class="grid">
-    <!-- 下面这些卡片已自动对应你上传的所有文件，链接已处理特殊字符，直接可用 -->
+    <!-- 工具卡片列表 -->
     <a class="card" href="ds_optimize.html">
       <div class="icon">🌳</div>
-      <h3>世界树转换器</h3>
-      <p>PiuPiu 转 Rikkahub 世界树格式转换。</p>
+      <h3>世界书转换器</h3>
+      <p>PiuPiu 转 Rikkahub 世界书格式转换。</p>
       <span class="tag">立即运行 →</span>
     </a>
     <a class="card" href="Adjust_the_status_bar.html">
