@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no,email=no,address=no">
+<meta name="theme-color" content="#0e1117">
+<title>三围计算器 · 含 BMI</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:#0e1117;
+  color:#eef2f8;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+  overscroll-behavior-y:none;
+  touch-action:manipulation;
+  min-height:100vh;
+}
+body::before{
+  content:"";
+  position:fixed;top:-160px;left:50%;transform:translateX(-50%);
+  width:560px;height:420px;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 50% 50%,rgba(157,123,255,.22),rgba(255,126,179,.10) 45%,transparent 72%);
+}
+.app{
+  position:relative;z-index:1;
+  max-width:540px;margin:0 auto;
+  padding:22px 14px calc(28px + env(safe-area-inset-bottom));
+}
+
+/* ---------- 顶部标题 ---------- */
+.hero-head{padding:6px 4px 16px;}
+.hero-head h1{
+  margin:0;font-size:23px;font-weight:800;letter-spacing:.5px;
+  background:linear-gradient(135deg,#ff9ec4,#b79bff 70%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#fff;
+}
+.hero-head p{margin:6px 0 0;font-size:12.5px;color:#697588;line-height:1.5;}
+
+/* ---------- 卡片 ---------- */
+.card{
+  background:linear-gradient(180deg,#181e27,#141922);
+  border:1px solid #232b38;
+  border-radius:18px;
+  padding:15px 15px;
+  margin-bottom:13px;
+  box-shadow:0 6px 20px rgba(0,0,0,.22);
+}
+.card-title{
+  font-size:13px;font-weight:600;color:#8b96a8;
+  margin-bottom:12px;letter-spacing:.3px;
+}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.row-label{font-size:13px;font-weight:600;color:#8b96a8;}
+.hint{font-size:11px;color:#4f5a6b;font-weight:400;}
+.mb8{margin-bottom:8px;}
+.mb12{margin-bottom:12px;}
+
+/* ---------- 单位切换 ---------- */
+.seg{
+  display:flex;background:#0f141b;border:1px solid #232b38;
+  border-radius:12px;padding:3px;gap:2px;
+}
+.seg button{
+  border:0;background:transparent;color:#8b96a8;
+  font-size:12.5px;font-family:inherit;
+  padding:7px 14px;border-radius:9px;cursor:pointer;
+  transition:all .22s ease;
+}
+.seg button.active{
+  background:linear-gradient(135deg,#ff7eb3,#9d7bff);
+  color:#fff;font-weight:700;
+  box-shadow:0 3px 12px rgba(157,123,255,.35);
+}
+
+/* ---------- 预设 ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  border:1px solid #2a3546;background:#1b2230;color:#b9c4d4;
+  font-size:13px;font-family:inherit;
+  padding:8px 14px;border-radius:999px;cursor:pointer;
+  transition:all .18s ease;
+}
+.chip:active{transform:scale(.94);}
+.chip.active{
+  background:linear-gradient(135deg,#ff7eb3,#9d7bff);
+  border-color:transparent;color:#fff;font-weight:600;
+  box-shadow:0 4px 14px rgba(157,123,255,.35);
+}
+
+/* ---------- 输入框 ---------- */
+.field{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;
+  background:#0f141b;
+  border:1px solid #212a37;
+  border-radius:14px;
+  margin-bottom:9px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.field:last-child{margin-bottom:0;}
+.field:focus-within{
+  border-color:rgba(157,123,255,.75);
+  box-shadow:0 0 0 3px rgba(157,123,255,.13);
+}
+.field .name{
+  font-size:14px;color:#c3ccda;font-weight:500;
+  min-width:58px;flex-shrink:0;line-height:1.25;
+}
+.field .name small{
+  display:block;font-size:10px;color:#5c6779;
+  margin-top:2px;font-weight:400;
+}
+.field input{
+  flex:1;width:100%;min-width:0;
+  background:transparent;border:0;outline:0;
+  color:#fff;font-size:19px;font-weight:700;
+  text-align:right;padding:0;font-family:inherit;
+  font-variant-numeric:tabular-nums;
+}
+.field input::placeholder{color:#333c4a;font-weight:400;}
+.field .unit-lbl{
+  font-size:12.5px;color:#6b7688;
+  min-width:26px;text-align:left;flex-shrink:0;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+
+/* ---------- 结果：空态 ---------- */
+.empty{
+  text-align:center;padding:34px 16px;
+  color:#57647a;font-size:13.5px;line-height:1.6;
+  border:1px dashed #232b38;border-radius:18px;
+  margin-bottom:13px;
+}
+
+/* ---------- 身材类型 ---------- */
+.type-card{
+  background:linear-gradient(135deg,rgba(255,126,179,.13),rgba(157,123,255,.13));
+  border-color:rgba(157,123,255,.30);
+}
+.type-label{font-size:12px;color:#9aa5b8;letter-spacing:.5px;}
+.type-name{
+  font-size:27px;font-weight:800;margin-top:6px;letter-spacing:.5px;
+  background:linear-gradient(135deg,#ff9ec4,#b79bff);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#fff;
+}
+.type-desc{font-size:13px;color:#98a3b6;line-height:1.65;margin-top:8px;}
+.type-extra{
+  margin-top:11px;padding-top:11px;
+  border-top:1px dashed rgba(157,123,255,.28);
+  font-size:12px;color:#a9b3c5;line-height:1.6;
+  font-variant-numeric:tabular-nums;
+}
+.type-extra b{color:#d9c9ff;font-weight:700;}
+
+/* ---------- BMI ---------- */
+.bmi-head{display:flex;align-items:center;gap:15px;}
+.bmi-val{
+  font-size:42px;font-weight:800;line-height:1;flex-shrink:0;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(135deg,#7ee7c7,#4fc3f7);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#fff;
+}
+.bmi-meta{flex:1;min-width:0;}
+.bmi-range{font-size:12.5px;color:#98a3b6;line-height:1.75;}
+.bmi-range b{color:#dbe3ee;font-weight:700;font-variant-numeric:tabular-nums;}
+
+/* ---------- 综合评分 ---------- */
+.score-head{display:flex;align-items:center;gap:15px;}
+.score-num{
+  font-size:42px;font-weight:800;line-height:1;flex-shrink:0;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(135deg,#ff9ec4,#b79bff);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#fff;
+}
+.score-side{flex:1;min-width:0;}
+.score-desc{font-size:12px;color:#98a3b6;line-height:1.6;margin-top:7px;}
+.score-items{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;}
+.score-items span{
+  font-size:11px;padding:4px 10px;border-radius:999px;
+  background:#0f141b;border:1px solid #212a37;color:#8b96a8;
+  font-variant-numeric:tabular-nums;
+}
+.score-items span.ok{color:#5ee08f;border-color:rgba(94,224,143,.32);background:rgba(94,224,143,.08);}
+.score-items span.warn{color:#ffbf47;border-color:rgba(255,191,71,.32);background:rgba(255,191,71,.08);}
+.score-items span.bad{color:#ff8080;border-color:rgba(255,128,128,.32);background:rgba(255,128,128,.08);}
+
+/* ---------- 指标网格 ---------- */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.metric{
+  background:#0f141b;border:1px solid #212a37;
+  border-radius:14px;padding:11px 12px;
+}
+.metric .mk{font-size:11.5px;color:#788396;}
+.metric .mv{
+  font-size:20px;font-weight:800;margin-top:5px;color:#fff;
+  font-variant-numeric:tabular-nums;line-height:1.15;
+}
+.metric .mv .mu{font-size:11px;color:#6b7688;font-weight:500;margin-left:3px;}
+.metric .mtag{
+  display:inline-block;font-size:10.5px;font-weight:600;
+  padding:2px 8px;border-radius:999px;margin-top:7px;
+  line-height:1.5;
+}
+.mtag.ok{background:rgba(74,222,128,.14);color:#5ee08f;}
+.mtag.warn{background:rgba(255,176,32,.15);color:#ffbf47;}
+.mtag.bad{background:rgba(255,92,92,.15);color:#ff8080;}
+.mtag.neutral{background:rgba(140,155,180,.14);color:#93a0b5;}
+
+/* ---------- 理想三围 ---------- */
+.ideal-row{margin-bottom:14px;}
+.ideal-row:last-child{margin-bottom:0;}
+.ideal-top{
+  display:flex;align-items:baseline;gap:8px;
+  font-size:12.5px;color:#8b96a8;margin-bottom:6px;
+}
+.ideal-name{min-width:34px;color:#c3ccda;font-weight:600;}
+.ideal-num{font-variant-numeric:tabular-nums;}
+.ideal-num em{font-style:normal;color:#5c6779;}
+.ideal-diff{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;}
+.ideal-diff.pos{color:#ff9ec4;}
+.ideal-diff.neg{color:#6fd3ff;}
+.ideal-diff.zero{color:#5ee08f;}
+.bar{height:7px;background:#0f141b;border-radius:999px;overflow:hidden;}
+.bar-fill{
+  height:100%;border-radius:999px;
+  background:linear-gradient(90deg,#ff7eb3,#9d7bff);
+  transition:width .45s cubic-bezier(.22,.7,.3,1);
+}
+.bar-fill.good{background:linear-gradient(90deg,#43d9a3,#5ee08f);}
+.bar-fill.score-high{background:linear-gradient(90deg,#43d9a3,#5ee08f);}
+.bar-fill.score-mid{background:linear-gradient(90deg,#ffb020,#ffcf5c);}
+.bar-fill.score-low{background:linear-gradient(90deg,#ff5c5c,#ff8a8a);}
+
+/* ---------- 尺码 ---------- */
+.size-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.size-item{
+  background:#0f141b;border:1px solid #212a37;
+  border-radius:14px;padding:11px 12px;
+}
+.size-item .sk{font-size:11.5px;color:#788396;display:block;}
+.size-item .sv{
+  font-size:22px;font-weight:800;color:#fff;margin-top:5px;
+  display:block;line-height:1.1;
+}
+.size-item .sc{font-size:11px;color:#65718a;display:block;margin-top:4px;}
+.bra-line{
+  margin-top:9px;padding:11px 12px;
+  background:rgba(157,123,255,.09);
+  border:1px solid rgba(157,123,255,.24);
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.bra-line .bl{font-size:12px;color:#a99bd8;}
+.bra-line .bv{font-size:20px;font-weight:800;color:#c9b6ff;letter-spacing:.5px;}
+
+/* ---------- 建议列表 ---------- */
+.tips{list-style:none;margin:0;padding:0;}
+.tips li{
+  position:relative;padding-left:18px;
+  font-size:13px;color:#98a3b6;line-height:1.7;margin-bottom:7px;
+}
+.tips li:last-child{margin-bottom:0;}
+.tips li::before{
+  content:"";position:absolute;left:4px;top:9px;
+  width:5px;height:5px;border-radius:50%;
+  background:linear-gradient(135deg,#ff7eb3,#9d7bff);
+}
+
+/* ---------- 按钮 ---------- */
+.actions{display:flex;gap:10px;margin-top:4px;}
+.btn{
+  flex:1;border:0;border-radius:15px;
+  font-size:14.5px;font-weight:700;font-family:inherit;
+  padding:15px 10px;cursor:pointer;
+  transition:transform .15s ease,opacity .15s ease;
+}
+.btn:active{transform:scale(.97);}
+.btn.primary{
+  background:linear-gradient(135deg,#ff7eb3,#9d7bff);
+  color:#fff;box-shadow:0 8px 22px rgba(157,123,255,.32);
+}
+.btn.ghost{
+  background:#181e27;color:#8b96a8;
+  border:1px solid #232b38;flex:0 0 32%;
+}
+
+/* ---------- 脚注 ---------- */
+.footnote{
+  font-size:11px;color:#4d5769;line-height:1.7;
+  text-align:center;margin:16px 6px 0;
+}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:44px;transform:translate(-50%,14px);
+  background:rgba(30,37,48,.97);
+  border:1px solid #2f3a4c;
+  color:#e6ecf5;font-size:13px;
+  padding:10px 20px;border-radius:999px;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+  z-index:99;white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+#toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="hero-head">
+    <h1>三围计算器 · BMI 版</h1>
+    <p>胸围 · 腰围 · 臀围 · BMI — 身材类型 / 综合健康评估 / 理想三围 / 尺码参考</p>
+  </header>
+
+  <!-- 单位 -->
+  <section class="card">
+    <div class="row">
+      <span class="row-label">测量单位</span>
+      <div class="seg" id="unitSeg">
+        <button type="button" data-u="cm" class="active">厘米 · 千克</button>
+        <button type="button" data-u="in">英寸 · 磅</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 预设 -->
+  <section class="card">
+    <div class="row-label mb8">快速预设 <span class="hint">点击填充示例数据</span></div>
+    <div class="chips" id="presetBox"></div>
+  </section>
+
+  <!-- 输入 -->
+  <section class="card">
+    <div class="row-label mb12">输入测量数据</div>
+
+    <div class="field">
+      <span class="name">胸围<small>上胸围</small></span>
+      <input id="bust" type="number" inputmode="decimal" step="0.1" placeholder="0.0">
+      <span class="unit-lbl">cm</span>
+    </div>
+
+    <div class="field">
+      <span class="name">腰围<small>最细处</small></span>
+      <input id="waist" type="number" inputmode="decimal" step="0.1" placeholder="0.0">
+      <span class="unit-lbl">cm</span>
+    </div>
+
+    <div class="field">
+      <span class="name">臀围<small>最丰满处</small></span>
+      <input id="hip" type="number" inputmode="decimal" step="0.1" placeholder="0.0">
+      <span class="unit-lbl">cm</span>
+    </div>
+
+    <div class="field">
+      <span class="name">身高<small>选填·算BMI</small></span>
+      <input id="height" type="number" inputmode="decimal" step="0.1" placeholder="0.0">
+      <span class="unit-lbl">cm</span>
+    </div>
+
+    <div class="field">
+      <span class="name">体重<small>选填·算BMI</small></span>
+      <input id="weight" type="number" inputmode="decimal" step="0.1" placeholder="0.0">
+      <span class="unit-lbl" id="weightUnit">kg</span>
+    </div>
+
+    <div class="field">
+      <span class="name">下胸围<small>选填·算罩杯</small></span>
+      <input id="underbust" type="number" inputmode="decimal" step="0.1" placeholder="0.0">
+      <span class="unit-lbl">cm</span>
+    </div>
+  </section>
+
+  <!-- 结果 -->
+  <div id="results"></div>
+
+  <!-- 操作 -->
+  <div class="actions">
+    <button type="button" class="btn ghost" id="btnReset">清空</button>
+    <button type="button" class="btn primary" id="btnCopy">复制结果</button>
+  </div>
+
+  <p class="footnote">
+    测量时请自然站立、保持呼吸平稳，软尺水平贴合皮肤但不勒紧。<br>
+    BMI 判定采用中国成人标准，本工具结果仅供参考，不构成医学建议。
+  </p>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+     常量与数据
+     ========================================================= */
+  var CM_PER_IN = 2.54;
+  var LB_PER_KG = 2.2046226;
+
+  // 长度类字段（随 cm/in 换算）
+  var LEN_FIELDS = ['bust', 'waist', 'hip', 'height', 'underbust'];
+  // 全部字段（含体重）
+  var FIELDS = LEN_FIELDS.concat(['weight']);
+
+  var unit = 'cm';               // 当前单位（cm/kg 或 in/lb）
+  var lastCopyText = '';         // 最近一次结果文本
+  var activePreset = null;       // 当前激活的预设 key
+
+  var PRESETS = [
+    { key: 'std',       label: '标准值',  bust: 87.5, waist: 61, hip: 89, height: 165, weight: 55 },
+    { key: 'hourglass', label: '沙漏型',  bust: 88,   waist: 64, hip: 90, height: 165, weight: 53 },
+    { key: 'pear',      label: '梨 型',   bust: 84,   waist: 68, hip: 96, height: 165, weight: 58 },
+    { key: 'apple',     label: '苹果型',  bust: 92,   waist: 82, hip: 94, height: 162, weight: 68 },
+    { key: 'invert',    label: '倒三角',  bust: 96,   waist: 72, hip: 88, height: 168, weight: 58 },
+    { key: 'straight',  label: '直筒型',  bust: 86,   waist: 74, hip: 88, height: 166, weight: 62 }
+  ];
+
+  var TYPES = {
+    hourglass: {
+      name: '沙漏型 · X型',
+      desc: '胸围与臀围接近，腰线纤细明显，三围比例最为均衡。',
+      tips: [
+        '重点强调腰线：收腰连衣裙、高腰裤、系带 / 腰带单品',
+        '包臀裙、铅笔裙可以充分发挥曲线优势',
+        '避免过于宽大松垮的直筒剪裁，容易吃掉腰线'
+      ]
+    },
+    pear: {
+      name: '梨型 · A型',
+      desc: '臀围明显大于胸围，下半身较为丰满，上身相对纤细。',
+      tips: [
+        '上浅下深、上繁下简，把视觉重心移到上半身',
+        '推荐 A 字裙、直筒裤、阔腿裤，以及带肩部设计的上衣',
+        '避免低腰紧身裤、包臀裙和过于贴身的针织下装'
+      ]
+    },
+    apple: {
+      name: '苹果型 · O型',
+      desc: '腰腹部位较为丰满，腰线不明显，四肢相对纤细。',
+      tips: [
+        '利用 V 领、大圆领拉长颈部与胸前线条',
+        '高腰 A 字裙、宽松直筒大衣、垂坠感面料都很友好',
+        '避免腰部收得很紧的紧身上衣与低腰裤'
+      ]
+    },
+    invert: {
+      name: '倒三角型 · Y型',
+      desc: '胸围 / 肩背较宽，臀围相对偏小，上半身更有存在感。',
+      tips: [
+        '下浅上深，增加下半身的体积感来平衡比例',
+        '推荐伞裙、阔腿裤、喇叭裤、微 A 短裙',
+        '避免垫肩、泡泡袖和过于膨胀的上衣版型'
+      ]
+    },
+    straight: {
+      name: '直筒型 · H型',
+      desc: '胸、腰、臀三围相差不大，线条平直，腰线不够明显。',
+      tips: [
+        '用腰带、收腰设计人为制造出腰线',
+        '裹身裙、高腰阔腿裤、层次叠穿都很友好',
+        '避免完全贴身且无腰线设计的直筒连衣裙'
+      ]
+    }
+  };
+
+  /* =========================================================
+     工具函数
+     ========================================================= */
+  function $(id) { return document.getElementById(id); }
+
+  function round1(v) { return Math.round(v * 10) / 10; }
+
+  function readNum(id) {
+    var v = parseFloat($(id).value);
+    return (isFinite(v) && v > 0) ? v : null;
+  }
+
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+  /* 兼容旧 WebView 的向上查找 */
+  function closestByClass(el, cls) {
+    while (el && el !== document) {
+      if (el.classList && el.classList.contains(cls)) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  /* 厘米 -> 当前单位（长度），整数或一位小数 */
+  function len(cmVal) {
+    if (unit === 'cm') return String(Math.round(cmVal));
+    return String(round1(cmVal / CM_PER_IN));
+  }
+
+  /* 差值符号显示 */
+  function signed(cmVal) {
+    var v = unit === 'cm' ? Math.round(cmVal) : round1(cmVal / CM_PER_IN);
+    return (v > 0 ? '+' : '') + v;
+  }
+
+  function unitShort() { return unit === 'cm' ? 'cm' : 'in'; }
+
+  /* 千克 -> 当前单位（体重） */
+  function wVal(kg) {
+    return unit === 'cm' ? round1(kg) : round1(kg * LB_PER_KG);
+  }
+  function wUnit() { return unit === 'cm' ? 'kg' : 'lb'; }
+
+  /* BMI 分类（中国成人标准） */
+  function bmiLabel(v) {
+    if (v < 18.5) return { t: '偏瘦', c: 'warn' };
+    if (v < 24)   return { t: '正常', c: 'ok' };
+    if (v < 28)   return { t: '超重', c: 'warn' };
+    return { t: '肥胖', c: 'bad' };
+  }
+
+  /* ★ 风险等级 0/1/2 -> 标签 class（注意：这是函数，不要再拿同名变量遮蔽它） */
+  function riskTagCls(r) { return r === 0 ? 'ok' : (r === 1 ? 'warn' : 'bad'); }
+  function riskMark(r)   { return r === 0 ? '✓' : (r === 1 ? '略高' : '偏高'); }
+
+  /* =========================================================
+     预设
+     ========================================================= */
+  function buildPresets() {
+    var box = $('presetBox');
+    var html = '';
+    for (var i = 0; i < PRESETS.length; i++) {
+      html += '<button type="button" class="chip" data-key="' + PRESETS[i].key + '">'
+            + PRESETS[i].label + '</button>';
+    }
+    box.innerHTML = html;
+
+    box.addEventListener('click', function (e) {
+      var btn = closestByClass(e.target, 'chip');
+      if (!btn) return;
+      var key = btn.getAttribute('data-key');
+      if (key) applyPreset(key);
+    });
+  }
+
+  function applyPreset(key) {
+    var p = null;
+    for (var i = 0; i < PRESETS.length; i++) {
+      if (PRESETS[i].key === key) { p = PRESETS[i]; break; }
+    }
+    if (!p) return;
+
+    var k = unit === 'in' ? (1 / CM_PER_IN) : 1;
+
+    $('bust').value      = round1(p.bust * k);
+    $('waist').value     = round1(p.waist * k);
+    $('hip').value       = round1(p.hip * k);
+    $('height').value    = round1(p.height * k);
+    $('weight').value    = round1(p.weight * (unit === 'in' ? LB_PER_KG : 1));
+    $('underbust').value = '';
+
+    activePreset = key;
+    highlightPreset();
+    render();
+  }
+
+  function highlightPreset() {
+    var chips = document.querySelectorAll('#presetBox .chip');
+    for (var i = 0; i < chips.length; i++) {
+      if (chips[i].getAttribute('data-key') === activePreset) chips[i].classList.add('active');
+      else chips[i].classList.remove('active');
+    }
+  }
+
+  /* =========================================================
+     单位切换
+     ========================================================= */
+  function setUnit(next) {
+    if (next === unit) return;
+
+    // 长度类换算
+    var lenFactor = (next === 'in') ? (1 / CM_PER_IN) : CM_PER_IN;
+    for (var i = 0; i < LEN_FIELDS.length; i++) {
+      var el = $(LEN_FIELDS[i]);
+      var v = parseFloat(el.value);
+      if (isFinite(v) && v > 0) el.value = round1(v * lenFactor);
+    }
+
+    // 体重换算
+    var wEl = $('weight');
+    var wv = parseFloat(wEl.value);
+    if (isFinite(wv) && wv > 0) {
+      wEl.value = round1(wv * ((next === 'in') ? LB_PER_KG : (1 / LB_PER_KG)));
+    }
+
+    unit = next;
+    updateUnitLabels();
+    render();
+  }
+
+  function updateUnitLabels() {
+    var txt = unit === 'cm' ? 'cm' : 'in';
+    var labels = document.querySelectorAll('.unit-lbl');
+    for (var i = 0; i < labels.length; i++) labels[i].textContent = txt;
+
+    // 体重单位单独覆盖
+    var wu = $('weightUnit');
+    if (wu) wu.textContent = wUnit();
+
+    var btns = document.querySelectorAll('#unitSeg button');
+    for (var j = 0; j < btns.length; j++) {
+      if (btns[j].getAttribute('data-u') === unit) btns[j].classList.add('active');
+      else btns[j].classList.remove('active');
+    }
+  }
+
+  /* =========================================================
+     核心计算
+     ========================================================= */
+
+  /* 身材类型判断：BMI 会参与影响判定 */
+  function detectType(bust, waist, hip, bmi) {
+    var bw = bust - waist;      // 胸腰差
+    var hw = hip - waist;       // 臀腰差
+    var dh = bust - hip;        // 胸臀差
+    var whr = waist / hip;
+    var wbr = waist / bust;
+
+    // 1) 苹果型：腰围相对最粗；或 BMI 偏高 + 腰线不明显
+    var appleByShape = (whr >= 0.85 && wbr >= 0.85);
+    var appleByBmi   = (bmi && bmi >= 28 && whr >= 0.80);
+    if (appleByShape || appleByBmi) return TYPES.apple;
+
+    // 2) 沙漏型：腰明显细，且胸臀接近
+    if (Math.abs(dh) <= 5 && bw >= 18 && hw >= 18) return TYPES.hourglass;
+
+    // 3) 梨型：臀围明显大于胸围
+    if (hip - bust >= 5 && hw > bw) return TYPES.pear;
+
+    // 4) 倒三角：胸围明显大于臀围
+    if (bust - hip >= 5 && bw > hw) return TYPES.invert;
+
+    // 5) 直筒型
+    return TYPES.straight;
+  }
+
+  function topSize(bustCm) {
+    if (bustCm < 78) return { code: 'XS',   cn: '150/76A' };
+    if (bustCm < 82) return { code: 'S',    cn: '155/80A' };
+    if (bustCm < 86) return { code: 'M',    cn: '160/84A' };
+    if (bustCm < 90) return { code: 'L',    cn: '165/88A' };
+    if (bustCm < 94) return { code: 'XL',   cn: '170/92A' };
+    if (bustCm < 98) return { code: 'XXL',  cn: '175/96A' };
+    return { code: 'XXXL+', cn: '180/100A 以上' };
+  }
+
+  function bottomSize(waistCm) {
+    if (waistCm < 62) return { code: 'XS', cn: '约 24 英寸' };
+    if (waistCm < 66) return { code: 'S',  cn: '约 25 英寸' };
+    if (waistCm < 70) return { code: 'M',  cn: '约 26–27 英寸' };
+    if (waistCm < 74) return { code: 'L',  cn: '约 28 英寸' };
+    if (waistCm < 78) return { code: 'XL', cn: '约 29–30 英寸' };
+    if (waistCm < 82) return { code: 'XXL', cn: '约 31 英寸' };
+    return { code: 'XXXL+', cn: '32 英寸以上' };
+  }
+
+  function braSize(underCm, bustCm) {
+    var band;
+    if (underCm < 68) band = 65;
+    else if (underCm < 73) band = 70;
+    else if (underCm < 78) band = 75;
+    else if (underCm < 83) band = 80;
+    else if (underCm < 88) band = 85;
+    else if (underCm < 93) band = 90;
+    else band = 95;
+
+    var d = bustCm - underCm;
+    var cup;
+    if (d >= 22.5) cup = 'G+';
+    else if (d >= 20) cup = 'F';
+    else if (d >= 17.5) cup = 'E';
+    else if (d >= 15) cup = 'D';
+    else if (d >= 12.5) cup = 'C';
+    else if (d >= 10) cup = 'B';
+    else if (d >= 7.5) cup = 'A';
+    else cup = 'AA';
+
+    return { text: band + cup, diff: d };
+  }
+
+  /* =========================================================
+     HTML 小工具
+     ========================================================= */
+  function metricBox(label, value, unitTxt, tag, tagCls) {
+    var s = '<div class="metric">';
+    s += '<div class="mk">' + label + '</div>';
+    s += '<div class="mv">' + value + (unitTxt ? '<span class="mu">' + unitTxt + '</span>' : '') + '</div>';
+    if (tag) s += '<div class="mtag ' + (tagCls || 'neutral') + '">' + tag + '</div>';
+    s += '</div>';
+    return s;
+  }
+
+  /* =========================================================
+     渲染（外层 try/catch，异常时给出可见提示）
+     ========================================================= */
+  function render() {
+    var box = $('results');
+    try {
+      renderInner(box);
+    } catch (err) {
+      var msg = String((err && err.message) ? err.message : err).replace(/</g, '&lt;');
+      box.innerHTML = '<div class="empty">渲染出错：' + msg + '</div>';
+      lastCopyText = '';
+    }
+  }
+
+  function renderInner(box) {
+    var K = unit === 'in' ? CM_PER_IN : 1;   // 长度：当前单位 -> cm
+
+    var b  = readNum('bust');
+    var w  = readNum('waist');
+    var h  = readNum('hip');
+    var ht = readNum('height');
+    var ub = readNum('underbust');
+    var wtRaw = readNum('weight');
+
+    if (!b || !w || !h) {
+      box.innerHTML = '<div class="empty">请先填写「胸围 / 腰围 / 臀围」<br>结果会自动实时计算</div>';
+      lastCopyText = '';
+      return;
+    }
+
+    /* ---------- 统一换算成厘米 / 千克 ---------- */
+    var bust  = b * K;
+    var waist = w * K;
+    var hip   = h * K;
+    var height    = ht ? ht * K : null;
+    var underbust = ub ? ub * K : null;
+    var weightKg  = wtRaw ? (unit === 'cm' ? wtRaw : wtRaw / LB_PER_KG) : null;
+
+    /* ---------- BMI 计算（需要身高 + 体重） ---------- */
+    var bmi = null, bmiRisk = -1, idealWMin = null, idealWMax = null;
+    if (height && weightKg) {
+      var hM = height / 100;
+      bmi = weightKg / (hM * hM);
+      idealWMin = 18.5 * hM * hM;
+      idealWMax = 23.9 * hM * hM;
+      bmiRisk = bmi < 18.5 ? 1 : (bmi < 24 ? 0 : (bmi < 28 ? 1 : 2));
+    }
+
+    /* ---------- 输入合理性提示 ---------- */
+    var notes = [];
+    if (bust < 55 || bust > 200) notes.push('胸围数值似乎超出常见范围');
+    if (waist < 45 || waist > 200) notes.push('腰围数值似乎超出常见范围');
+    if (hip < 55 || hip > 200) notes.push('臀围数值似乎超出常见范围');
+    if (waist >= bust) notes.push('腰围 ≥ 胸围，请检查是否填反');
+    if (wtRaw && !height) notes.push('已填写体重，补充身高后即可计算 BMI');
+    if (height && !wtRaw) notes.push('已填写身高，补充体重后即可计算 BMI');
+
+    /* ---------- 基础指标 ---------- */
+    var whr  = waist / hip;                        // 腰臀比
+    var whtr = height ? (waist / height) : null;   // 腰高比
+    var bw = bust - waist;                         // 胸腰差
+    var hw = hip - waist;                          // 臀腰差
+    var dh = bust - hip;                           // 胸臀差
+
+    // WHR 风险
+    var whrRisk = whr < 0.80 ? 0 : (whr < 0.85 ? 1 : 2);
+    var whrTag  = whrRisk === 0 ? '健康区间' : (whrRisk === 1 ? '略偏高' : '偏高');
+
+    // 胸臀差标签
+    var dhTag, dhCls;
+    if (Math.abs(dh) <= 3) { dhTag = '胸臀接近'; dhCls = 'ok'; }
+    else if (dh > 0) { dhTag = '胸围偏大'; dhCls = 'neutral'; }
+    else { dhTag = '臀围偏大'; dhCls = 'neutral'; }
+
+    /* ---------- 身材类型（BMI 参与判定） ---------- */
+    var type = detectType(bust, waist, hip, bmi);
+
+    /* ---------- 综合健康评分（BMI + WHR + WHtR） ---------- */
+    var score = 100;
+
+    if (bmiRisk === 1) score -= 15;
+    else if (bmiRisk === 2) score -= 30;
+
+    if (whrRisk === 1) score -= 12;
+    else if (whrRisk === 2) score -= 22;
+
+    var whtrRisk = -1;
+    if (whtr !== null) {
+      whtrRisk = whtr < 0.5 ? 0 : (whtr < 0.6 ? 1 : 2);
+      if (whtrRisk === 1) score -= 12;
+      else if (whtrRisk === 2) score -= 22;
+    }
+
+    score = clamp(Math.round(score), 0, 100);
+
+    var scoreBarCls = score >= 85 ? 'score-high' : (score >= 70 ? 'score-mid' : 'score-low');
+
+    // ★ 注意：这里用 scoreLevel / scoreTagCls / scoreDesc，绝不与任何函数同名
+    var scoreLevel, scoreTagCls, scoreDesc;
+    if (score >= 85) {
+      scoreLevel = '低风险'; scoreTagCls = 'ok';
+      scoreDesc = '各项可评估指标均处于理想区间，继续保持规律作息与适量运动即可。';
+    } else if (score >= 70) {
+      scoreLevel = '中等风险'; scoreTagCls = 'warn';
+      scoreDesc = '部分指标略偏离理想区间，建议关注饮食结构与腰腹围度变化。';
+    } else {
+      scoreLevel = '较高风险'; scoreTagCls = 'bad';
+      scoreDesc = '多项指标偏离理想区间，建议调整生活方式，必要时咨询专业医生或营养师。';
+    }
+    if (!height) scoreDesc += ' 补充身高与体重后可纳入 BMI 与腰高比。';
+    else if (!weightKg) scoreDesc += ' 补充体重后可纳入 BMI。';
+
+    /* ---------- 拼装 HTML ---------- */
+    var parts = [];
+
+    // 输入提示
+    if (notes.length) {
+      var warnHtml = '<div class="card" style="border-color:rgba(255,176,32,.35);background:rgba(255,176,32,.06);">';
+      warnHtml += '<div class="card-title" style="color:#ffbf47;margin-bottom:6px;">⚠ 请确认输入</div>';
+      warnHtml += '<ul class="tips">';
+      for (var ni = 0; ni < notes.length; ni++) {
+        warnHtml += '<li style="color:#d8b877;">' + notes[ni] + '</li>';
+      }
+      warnHtml += '</ul></div>';
+      parts.push(warnHtml);
+    }
+
+    // 身材类型
+    var typeExtra;
+    if (bmi) {
+      typeExtra = '综合 <b>BMI ' + bmi.toFixed(1) + '（' + bmiLabel(bmi).t + '）</b> · 腰臀比 <b>' + whr.toFixed(2) + '</b>'
+                + (whtr !== null ? ' · 腰高比 <b>' + whtr.toFixed(2) + '</b>' : '');
+    } else {
+      typeExtra = '腰臀比 <b>' + whr.toFixed(2) + '</b> · 胸腰差 <b>' + len(bw) + unitShort() + '</b> · 臀腰差 <b>' + len(hw) + unitShort() + '</b>';
+    }
+
+    parts.push(
+      '<div class="card type-card">' +
+        '<div class="type-label">你的身材类型</div>' +
+        '<div class="type-name">' + type.name + '</div>' +
+        '<div class="type-desc">' + type.desc + '</div>' +
+        '<div class="type-extra">' + typeExtra + '</div>' +
+      '</div>'
+    );
+
+    // BMI 卡片（身高 + 体重）
+    if (bmi) {
+      var bl = bmiLabel(bmi);
+      var wtCompare;
+      if (weightKg < idealWMin) wtCompare = '低于理想区间，建议适当增重';
+      else if (weightKg > idealWMax) wtCompare = '高于理想区间，建议适当控制';
+      else wtCompare = '处于理想区间内 ✓';
+
+      parts.push(
+        '<div class="card">' +
+          '<div class="card-title">BMI 与体重</div>' +
+          '<div class="bmi-head">' +
+            '<div class="bmi-val">' + bmi.toFixed(1) + '</div>' +
+            '<div class="bmi-meta">' +
+              '<span class="mtag ' + bl.c + '">' + bl.t + '</span>' +
+              '<div class="bmi-range" style="margin-top:7px;">理想体重区间：<b>' + wVal(idealWMin) + ' – ' + wVal(idealWMax) + ' ' + wUnit() + '</b></div>' +
+              '<div class="bmi-range">当前体重 <b>' + wVal(weightKg) + ' ' + wUnit() + '</b>，' + wtCompare + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    // 综合健康评估
+    var scoreItems = '';
+    if (bmiRisk >= 0) {
+      scoreItems += '<span class="' + riskTagCls(bmiRisk) + '">BMI ' + bmi.toFixed(1) + ' ' + riskMark(bmiRisk) + '</span>';
+    }
+    scoreItems += '<span class="' + riskTagCls(whrRisk) + '">腰臀比 ' + whr.toFixed(2) + ' ' + riskMark(whrRisk) + '</span>';
+    if (whtrRisk >= 0) {
+      scoreItems += '<span class="' + riskTagCls(whtrRisk) + '">腰高比 ' + whtr.toFixed(2) + ' ' + riskMark(whtrRisk) + '</span>';
+    }
+
+    parts.push(
+      '<div class="card">' +
+        '<div class="card-title">综合健康评估 <span class="hint">BMI · 腰臀比 · 腰高比 加权</span></div>' +
+        '<div class="score-head">' +
+          '<div class="score-num">' + score + '</div>' +
+          '<div class="score-side">' +
+            '<span class="mtag ' + scoreTagCls + '">' + scoreLevel + '</span>' +
+            '<div class="score-desc">' + scoreDesc + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="bar" style="margin-top:12px;"><div class="bar-fill ' + scoreBarCls + '" style="width:' + score + '%;"></div></div>' +
+        '<div class="score-items">' + scoreItems + '</div>' +
+      '</div>'
+    );
+
+    // 核心指标
+    parts.push(
+      '<div class="card">' +
+        '<div class="card-title">核心指标</div>' +
+        '<div class="metrics">' +
+          metricBox('腰臀比 WHR', whr.toFixed(2), '', whrTag, riskTagCls(whrRisk)) +
+          metricBox('胸腰差', len(bw), unitShort(), bw >= 20 ? '曲线明显' : (bw >= 12 ? '中等' : '偏平'), bw >= 20 ? 'ok' : 'neutral') +
+          metricBox('臀腰差', len(hw), unitShort(), hw >= 20 ? '曲线明显' : (hw >= 12 ? '中等' : '偏平'), hw >= 20 ? 'ok' : 'neutral') +
+          metricBox('胸臀差', signed(dh), unitShort(), dhTag, dhCls) +
+        '</div>' +
+      '</div>'
+    );
+
+    // 理想三围对比
+    if (height) {
+      var idealBust  = height * 0.53;
+      var idealWaist = height * 0.37;
+      var idealHip   = height * 0.54;
+
+      var rows = [
+        { name: '胸围', actual: bust,  ideal: idealBust  },
+        { name: '腰围', actual: waist, ideal: idealWaist },
+        { name: '臀围', actual: hip,   ideal: idealHip   }
+      ];
+
+      var idealHtml = '<div class="card">';
+      idealHtml += '<div class="card-title">理想三围对比 <span class="hint">按身高 ' + len(height) + unitShort() + ' 估算</span></div>';
+
+      for (var ri = 0; ri < rows.length; ri++) {
+        var r = rows[ri];
+        var ratio = r.actual / r.ideal;
+        var width = clamp(ratio * 100, 6, 100);
+        var d = r.actual - r.ideal;
+        var cls = Math.abs(d) < 1.5 ? 'zero' : (d > 0 ? 'pos' : 'neg');
+
+        idealHtml += '<div class="ideal-row">';
+        idealHtml +=   '<div class="ideal-top">';
+        idealHtml +=     '<span class="ideal-name">' + r.name + '</span>';
+        idealHtml +=     '<span class="ideal-num">' + len(r.actual) + ' <em>/ 理想 ' + len(r.ideal) + '</em></span>';
+        idealHtml +=     '<span class="ideal-diff ' + cls + '">' + signed(d) + '</span>';
+        idealHtml +=   '</div>';
+        idealHtml +=   '<div class="bar"><div class="bar-fill' + (Math.abs(d) < 1.5 ? ' good' : '') + '" style="width:' + width.toFixed(1) + '%;"></div></div>';
+        idealHtml += '</div>';
+      }
+
+      idealHtml += '</div>';
+      parts.push(idealHtml);
+    }
+
+    // 尺码参考
+    var top = topSize(bust);
+    var bottom = bottomSize(waist);
+
+    var sizeHtml = '<div class="card">';
+    sizeHtml += '<div class="card-title">尺码参考 <span class="hint">不同品牌版型有差异</span></div>';
+    sizeHtml += '<div class="size-grid">';
+    sizeHtml +=   '<div class="size-item"><span class="sk">上装（按胸围）</span><span class="sv">' + top.code + '</span><span class="sc">' + top.cn + '</span></div>';
+    sizeHtml +=   '<div class="size-item"><span class="sk">下装（按腰围）</span><span class="sv">' + bottom.code + '</span><span class="sc">' + bottom.cn + '</span></div>';
+    sizeHtml += '</div>';
+
+    if (underbust && underbust < bust) {
+      var bra = braSize(underbust, bust);
+      sizeHtml += '<div class="bra-line">';
+      sizeHtml +=   '<span class="bl">内衣参考尺码</span>';
+      sizeHtml +=   '<span class="bv">' + bra.text + '</span>';
+      sizeHtml += '</div>';
+    } else if (underbust && underbust >= bust) {
+      sizeHtml += '<div class="bra-line"><span class="bl">下胸围 ≥ 胸围，请检查输入</span></div>';
+    }
+
+    sizeHtml += '</div>';
+    parts.push(sizeHtml);
+
+    // 穿搭建议（结合 BMI 动态追加）
+    var tipList = type.tips.slice();
+    if (bmi) {
+      if (bmi < 18.5) {
+        tipList.push('BMI 偏瘦：可用浅色、横向线条、挺括面料与叠穿增加视觉分量。');
+      } else if (bmi >= 28) {
+        tipList.push('BMI 偏高：优先选择垂坠感面料、深色主色与高腰线设计，视觉上更显利落，同时建议关注体重管理。');
+      } else if (bmi >= 24) {
+        tipList.push('BMI 略高：V 领、竖线条与高腰设计能有效拉长比例，避免过于紧绷的版型。');
+      }
+    }
+
+    var tipHtml = '<div class="card">';
+    tipHtml += '<div class="card-title">穿搭建议（' + type.name.split(' · ')[0] + '）</div>';
+    tipHtml += '<ul class="tips">';
+    for (var ti = 0; ti < tipList.length; ti++) {
+      tipHtml += '<li>' + tipList[ti] + '</li>';
+    }
+    tipHtml += '</ul></div>';
+    parts.push(tipHtml);
+
+    // 健康小知识（含 BMI 说明）
+    var noteHtml = '<div class="card">';
+    noteHtml += '<div class="card-title">健康指标小知识</div>';
+    noteHtml += '<ul class="tips">';
+
+    if (whrRisk === 0) {
+      noteHtml += '<li>女性 WHR 低于 0.80 通常被认为处于较为健康的区间。</li>';
+    } else if (whrRisk === 1) {
+      noteHtml += '<li>女性 WHR 在 0.80–0.85 之间属于略偏高，建议关注腰腹围度变化。</li>';
+    } else {
+      noteHtml += '<li>女性 WHR ≥ 0.85 提示腹部脂肪相对偏多，建议结合饮食与运动改善。</li>';
+    }
+
+    if (bmi) {
+      var bl2 = bmiLabel(bmi);
+      if (bl2.t === '正常') {
+        noteHtml += '<li>BMI ' + bmi.toFixed(1) + ' 处于中国成人正常范围（18.5–23.9）。</li>';
+      } else if (bl2.t === '偏瘦') {
+        noteHtml += '<li>BMI ' + bmi.toFixed(1) + ' 低于 18.5，属于偏瘦，建议保证充足蛋白质与能量摄入。</li>';
+      } else if (bl2.t === '超重') {
+        noteHtml += '<li>BMI ' + bmi.toFixed(1) + ' 处于 24–27.9 超重区间，建议控制精制碳水与油脂摄入。</li>';
+      } else {
+        noteHtml += '<li>BMI ' + bmi.toFixed(1) + ' 已 ≥ 28，属于肥胖区间，建议系统调整生活方式。</li>';
+      }
+    } else {
+      noteHtml += '<li>补充身高与体重后，可计算 BMI 并获得更综合的健康评估。</li>';
+    }
+
+    if (whtr !== null) {
+      if (whtr < 0.5) noteHtml += '<li>腰高比 ' + whtr.toFixed(2) + ' 小于 0.5，腹部脂肪堆积风险较低。</li>';
+      else if (whtr < 0.6) noteHtml += '<li>腰高比 ' + whtr.toFixed(2) + ' 超过 0.5，提示需要关注腰腹脂肪。</li>';
+      else noteHtml += '<li>腰高比 ' + whtr.toFixed(2) + ' 达到 0.6 以上，腹部肥胖风险较高。</li>';
+    }
+
+    noteHtml += '<li>以上指标均为参考，不能替代专业体检与医学评估。</li>';
+    noteHtml += '</ul></div>';
+    parts.push(noteHtml);
+
+    box.innerHTML = parts.join('');
+
+    /* ---------- 生成复制文本 ---------- */
+    var lines = [];
+    lines.push('【三围计算器结果】');
+    lines.push('单位：' + (unit === 'cm' ? '厘米 / 千克' : '英寸 / 磅'));
+    lines.push('胸围 ' + len(bust) + ' / 腰围 ' + len(waist) + ' / 臀围 ' + len(hip));
+    if (height) lines.push('身高 ' + len(height) + (weightKg ? '　体重 ' + wVal(weightKg) + ' ' + wUnit() : ''));
+    lines.push('———————');
+    if (bmi) {
+      lines.push('BMI：' + bmi.toFixed(1) + '（' + bmiLabel(bmi).t + '）');
+      lines.push('理想体重区间：' + wVal(idealWMin) + ' – ' + wVal(idealWMax) + ' ' + wUnit());
+    }
+    lines.push('腰臀比 WHR：' + whr.toFixed(2) + '（' + whrTag + '）');
+    if (whtr !== null) lines.push('腰高比 WHtR：' + whtr.toFixed(2));
+    lines.push('综合健康评分：' + score + ' 分（' + scoreLevel + '）');
+    lines.push('胸腰差：' + len(bw) + unitShort() + '　臀腰差：' + len(hw) + unitShort());
+    lines.push('身材类型：' + type.name);
+    if (height) {
+      lines.push('理想三围：胸 ' + len(height * 0.53) + ' / 腰 ' + len(height * 0.37) + ' / 臀 ' + len(height * 0.54));
+    }
+    lines.push('上装尺码：' + top.code + '（' + top.cn + '）');
+    lines.push('下装尺码：' + bottom.code + '（' + bottom.cn + '）');
+    if (underbust && underbust < bust) {
+      lines.push('内衣尺码：' + braSize(underbust, bust).text);
+    }
+    lastCopyText = lines.join('\n');
+  }
+
+  /* =========================================================
+     复制 & Toast
+     ========================================================= */
+  var toastTimer = null;
+  function toast(msg) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1700);
+  }
+
+  function copyText(text) {
+    if (!text) { toast('暂无可复制的结果'); return; }
+
+    function done() { toast('已复制到剪贴板'); }
+    function fail() { toast('复制失败，请长按选择'); }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, function () {
+        legacyCopy(text) ? done() : fail();
+      });
+    } else {
+      legacyCopy(text) ? done() : fail();
+    }
+  }
+
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  /* =========================================================
+     事件绑定
+     ========================================================= */
+  function bindEvents() {
+    // 单位切换
+    $('unitSeg').addEventListener('click', function (e) {
+      var btn = closestByClass(e.target, 'seg') === null ? e.target : null;
+      // 更简单：直接取 data-u
+      var el = e.target;
+      var u = el && el.getAttribute ? el.getAttribute('data-u') : null;
+      if (!u && el && el.parentNode) {
+        u = el.parentNode.getAttribute ? el.parentNode.getAttribute('data-u') : null;
+      }
+      if (u) setUnit(u);
+    });
+
+    // 输入实时计算（防抖）
+    var timer = null;
+    for (var i = 0; i < FIELDS.length; i++) {
+      (function (id) {
+        var el = $(id);
+        el.addEventListener('input', function () {
+          activePreset = null;
+          highlightPreset();
+          clearTimeout(timer);
+          timer = setTimeout(render, 130);
+        });
+        el.addEventListener('blur', function () {
+          clearTimeout(timer);
+          render();
+        });
+        el.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.keyCode === 13) el.blur();
+        });
+      })(FIELDS[i]);
+    }
+
+    // 清空
+    $('btnReset').addEventListener('click', function () {
+      for (var i = 0; i < FIELDS.length; i++) $(FIELDS[i]).value = '';
+      activePreset = null;
+      highlightPreset();
+      render();
+      toast('已清空');
+    });
+
+    // 复制
+    $('btnCopy').addEventListener('click', function () {
+      copyText(lastCopyText);
+    });
+  }
+
+  /* =========================================================
+     初始化
+     ========================================================= */
+  function init() {
+    buildPresets();
+    bindEvents();
+    updateUnitLabels();
+    render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>
