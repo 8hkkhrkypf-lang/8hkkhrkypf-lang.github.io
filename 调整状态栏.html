@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HTML字体一键放大工具</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; padding: 15px; background-color: #f4f6f9; margin: 0; }
+        .container { max-width: 100%; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { font-size: 20px; margin-top: 0; margin-bottom: 15px; color: #333; }
+        .label { font-weight: bold; font-size: 14px; color: #555; display: block; margin-bottom: 6px; }
+        textarea { width: 100%; height: 250px; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; resize: vertical; margin-bottom: 15px; }
+        .controls { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px; }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        .control-group input[type="number"] { width: 80px; padding: 8px 5px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; text-align: center; }
+        button { background: #337ab7; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; }
+        button:active { background: #23527c; }
+        .output-area { background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-top: 15px; display: none; }
+        .output-code { white-space: pre-wrap; word-break: break-all; font-size: 15px; color: #222; font-family: monospace; }
+        .copy-btn { background: #5cb85c; margin-top: 10px; }
+        .hint { font-size: 13px; color: #888; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔍 HTML 字体一键放大替换</h1>
+    <p class="hint">粘贴带有内联样式的 HTML 代码，工具会自动识别 <code>font-size</code> 和 <code>line-height</code> 并替换成你指定的大小。</p>
+    
+    <label class="label">📋 输入你的 HTML 原文：</label>
+    <textarea id="inputHTML" placeholder="请在此粘贴 ... &lt;div style=&quot;font-size: 0.9em;&quot;&gt;..."></textarea>
+
+    <div class="controls">
+        <div class="control-group">
+            <label class="label">目标字体大小：</label>
+            <input type="number" id="fontSize" value="30"> <span>px</span>
+        </div>
+        <div class="control-group">
+            <label class="label">目标行高：</label>
+            <input type="number" step="0.1" id="lineHeight" value="1.8">
+        </div>
+    </div>
+
+    <button id="convertBtn">⚡ 一键放大替换</button>
+
+    <div class="output-area" id="outputArea">
+        <label class="label">✅ 替换后的 HTML (直接复制可用)：</label>
+        <div class="output-code" id="outputHTML"></div>
+        <button class="copy-btn" id="copyBtn">📋 一键复制结果</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('convertBtn').addEventListener('click', function() {
+        let originalText = document.getElementById('inputHTML').value;
+        let targetFontSize = document.getElementById('fontSize').value || '30';
+        let targetLineHeight = document.getElementById('lineHeight').value || '1.8';
+
+        if (!originalText.trim()) {
+            alert('请先输入 HTML 原文！');
+            return;
+        }
+
+        // 核心替换逻辑：精准替换 font-size 和 line-height，保留 !important 和分号
+        let result = originalText;
+
+        // 1. 替换 font-size
+        // 匹配规则: font-size: [数值] [可选important] [可选分号]
+        result = result.replace(
+            /(font-size\s*:\s*)([^;!]+)(\s*!important\s*)?(;?)/gi,
+            `$1${targetFontSize}px$3$4`
+        );
+
+        // 2. 替换 line-height
+        result = result.replace(
+            /(line-height\s*:\s*)([^;!]+)(\s*!important\s*)?(;?)/gi,
+            `$1${targetLineHeight}$3$4`
+        );
+
+        // 输出结果
+        document.getElementById('outputHTML').innerText = result;
+        document.getElementById('outputArea').style.display = 'block';
+    });
+
+    // 复制功能
+    document.getElementById('copyBtn').addEventListener('click', function() {
+        let content = document.getElementById('outputHTML').innerText;
+        if (!content) return;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(content).then(() => {
+                alert('✅ 已成功复制到剪贴板，去粘贴吧！');
+            }).catch(() => {
+                fallbackCopy(content);
+            });
+        } else {
+            fallbackCopy(content);
+        }
+    });
+
+    function fallbackCopy(text) {
+        let textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert('✅ 已成功复制到剪贴板！');
+        } catch (e) {
+            alert('❌ 复制失败，请手动长按选择复制。');
+        }
+        document.body.removeChild(textarea);
+    }
+</script>
+
+</body>
+</html>

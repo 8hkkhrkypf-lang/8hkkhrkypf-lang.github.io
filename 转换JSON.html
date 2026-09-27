@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PiuPiu → Rikkahub 转换器（优化版）</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 16px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 20px 24px 28px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+        h1 { font-size: 1.6rem; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; }
+        .sub { color: #64748b; font-size: 0.9rem; margin-bottom: 20px; }
+        .row { display: flex; flex-direction: column; gap: 12px; }
+        label { font-weight: 600; font-size: 0.9rem; color: #1e293b; }
+        textarea {
+            width: 100%; height: 150px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            background: #f8fafc;
+            transition: 0.2s;
+        }
+        textarea:focus { border-color: #3b82f6; outline: none; background: white; }
+        .file-upload { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .file-upload input[type="file"] { flex: 1; min-width: 160px; }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; flex-wrap: wrap; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0; }
+        .btn {
+            background: #3b82f6; color: white; border: none;
+            padding: 10px 22px; border-radius: 40px;
+            font-weight: 600; font-size: 0.95rem;
+            cursor: pointer; transition: 0.15s; display: inline-flex;
+            align-items: center; gap: 6px; justify-content: center;
+            flex: 1 0 auto; min-width: 70px;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-secondary { background: #64748b; }
+        .btn-success { background: #22c55e; }
+        .btn-outline { background: transparent; border: 2px solid #3b82f6; color: #3b82f6; }
+        .btn:disabled { opacity: 0.5; pointer-events: none; }
+        .status {
+            padding: 10px 16px; border-radius: 12px; font-size: 0.9rem;
+            display: none; margin-top: 4px;
+        }
+        .status.success { display: block; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status.error { display: block; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .status.info { display: block; background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .output-header { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 6px; }
+        .output-box {
+            background: #0f172a; color: #e2e8f0;
+            padding: 16px; border-radius: 14px;
+            font-family: 'Courier New', monospace; font-size: 0.75rem;
+            white-space: pre-wrap; word-break: break-all;
+            max-height: 420px; overflow-y: auto;
+            border: 2px solid #1e293b;
+        }
+        .progress-bar {
+            width: 100%; height: 6px; background: #e2e8f0; border-radius: 6px;
+            overflow: hidden; margin: 8px 0 4px; display: none;
+        }
+        .progress-bar .fill {
+            height: 100%; width: 0%; background: #3b82f6; transition: width 0.2s;
+        }
+        @media (max-width: 480px) {
+            .container { padding: 16px; }
+            textarea { height: 110px; }
+            .btn { padding: 8px 14px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📚 PiuPiu → 斗罗大陆</h1>
+    <div class="sub">批量转换器 · 优化版（支持数百条目不卡顿）</div>
+    <div class="row">
+        <div>
+            <label for="inputJson">输入 PiuPiu JSON</label>
+            <textarea id="inputJson" placeholder="粘贴或上传你的 PiuPiuBook_*.json 内容…">{
+  "name": "PiuPiu的秘密日记",
+  "description": "示例描述",
+  "scan_depth": 10,
+  "token_budget": 1536,
+  "token_budget_enabled": false,
+  "enabled": true,
+  "global_constant": false,
+  "entries": [
+    {
+      "name": "称呼设定",
+      "content": "PiuPiu酱称呼哥哥为杂鱼哥哥。",
+      "keys": ["杂鱼哥哥", "哥哥"],
+      "enabled": true,
+      "constant": true,
+      "case_sensitive": false,
+      "insertion_order": 0,
+      "priority": 100,
+      "position": "after",
+      "comment": ""
+    }
+  ]
+}</textarea>
+        </div>
+        <div class="file-upload">
+            <label>或上传 .json 文件：</label>
+            <input type="file" id="fileInput" accept=".json">
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="prettyPrint">
+            <label for="prettyPrint">美化输出（缩进）</label>
+            <span style="margin-left:auto;font-size:0.8rem;color:#64748b;">默认压缩，更快</span>
+        </div>
+        <div class="btn-group">
+            <button class="btn" id="convertBtn">🔄 转换</button>
+            <button class="btn btn-secondary" id="clearBtn">🗑️ 清空</button>
+        </div>
+        <div class="progress-bar" id="progressBar"><div class="fill" id="progressFill"></div></div>
+        <div id="status" class="status"></div>
+        <div class="output-header">
+            <span style="font-weight:600;">✅ 结果</span>
+            <div style="display:flex;gap:6px;">
+                <button class="btn btn-success" id="copyBtn" style="padding:6px 14px;font-size:0.8rem;">📋 复制</button>
+                <button class="btn btn-secondary" id="downloadBtn" style="padding:6px 14px;font-size:0.8rem;">⬇️ 下载</button>
+            </div>
+        </div>
+        <div class="output-box" id="outputBox">等待转换…</div>
+    </div>
+</div>
+<script>
+(function(){
+    // DOM 引用
+    const inputEl = document.getElementById('inputJson');
+    const fileInput = document.getElementById('fileInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const outputBox = document.getElementById('outputBox');
+    const statusDiv = document.getElementById('status');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const prettyCheck = document.getElementById('prettyPrint');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+
+    // ---- 辅助函数 ----
+    function showStatus(message, type = 'info') {
+        statusDiv.textContent = message;
+        statusDiv.className = 'status ' + type;
+        // 自动隐藏（除了错误）
+        if (type !== 'error') {
+            clearTimeout(statusDiv._timer);
+            statusDiv._timer = setTimeout(() => { statusDiv.className = 'status'; }, 8000);
+        }
+    }
+
+    // 高速 UUID（优先使用原生 crypto，否则回退）
+    function fastUUID() {
+        if (window.crypto && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        // 简单回退（16进制）
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    // 清理内容（去换行，压缩空格）
+    function cleanContent(text) {
+        if (typeof text !== 'string') return text;
+        return text.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // ---- 核心转换（异步分片） ----
+    async function convertPiuPiuToDouLuo(inputObj, onProgress) {
+        const total = inputObj.entries ? inputObj.entries.length : 0;
+        if (total === 0) {
+            return { error: '没有 entries 数据' };
+        }
+
+        const name = inputObj.name || '未命名世界书';
+        const enabled = inputObj.enabled !== undefined ? inputObj.enabled : true;
+        const newEntries = [];
+        const entries = inputObj.entries;
+
+        // 分片处理，每批 50 条
+        const BATCH = 50;
+        for (let i = 0; i < total; i += BATCH) {
+            const batch = entries.slice(i, i + BATCH);
+            for (const entry of batch) {
+                const newEntry = {
+                    id: fastUUID(),
+                    name: entry.name || '',
+                    enabled: entry.enabled !== undefined ? entry.enabled : true,
+                    priority: entry.priority || 0,
+                    position: 'after_system_prompt',
+                    content: cleanContent(entry.content || ''),
+                    injectDepth: 4,
+                    role: 'user',
+                    keywords: entry.keys || [],
+                    useRegex: false,
+                    caseSensitive: entry.case_sensitive || false,
+                    scanDepth: 4,
+                    constantActive: entry.constant || false
+                };
+                newEntries.push(newEntry);
+            }
+            // 报告进度
+            if (onProgress) {
+                onProgress(Math.min(i + BATCH, total), total);
+            }
+            // 让出主线程（每批后休眠 0ms，实际会触发一次重绘）
+            await new Promise(r => setTimeout(r, 0));
+        }
+
+        const result = {
+            version: 1,
+            type: 'lorebook',
+            data: {
+                id: fastUUID(),
+                name: name,
+                description: '',
+                enabled: enabled,
+                entries: newEntries
+            }
+        };
+        return result;
+    }
+
+    // ---- 转换入口 ----
+    async function performConversion() {
+        const raw = inputEl.value.trim();
+        if (!raw) {
+            showStatus('❌ 请输入或上传 JSON 内容', 'error');
+            return;
+        }
+
+        let inputObj;
+        try {
+            inputObj = JSON.parse(raw);
+        } catch (e) {
+            showStatus('❌ JSON 解析失败: ' + e.message, 'error');
+            return;
+        }
+
+        if (!inputObj.entries || !Array.isArray(inputObj.entries)) {
+            showStatus('❌ 缺少 "entries" 数组，请确认是 PiuPiu 格式', 'error');
+            return;
+        }
+
+        // 显示进度条
+        progressBar.style.display = 'block';
+        progressFill.style.width = '0%';
+        convertBtn.disabled = true;
+        outputBox.textContent = '正在处理…';
+
+        try {
+            const total = inputObj.entries.length;
+            const resultObj = await convertPiuPiuToDouLuo(inputObj, (done, total) => {
+                const pct = Math.round((done / total) * 100);
+                progressFill.style.width = pct + '%';
+                if (done < total) {
+                    showStatus(`⏳ 正在转换 ${done}/${total} 条目…`, 'info');
+                }
+            });
+
+            if (resultObj.error) {
+                showStatus('❌ ' + resultObj.error, 'error');
+                return;
+            }
+
+            const pretty = prettyCheck.checked;
+            const jsonStr = pretty ? JSON.stringify(resultObj, null, 2) : JSON.stringify(resultObj);
+            outputBox.textContent = jsonStr;
+            progressFill.style.width = '100%';
+            showStatus(`✅ 转换完成！共 ${resultObj.data.entries.length} 个条目`, 'success');
+        } catch (err) {
+            showStatus('❌ 转换失败: ' + err.message, 'error');
+        } finally {
+            convertBtn.disabled = false;
+            // 进度条稍后隐藏
+            setTimeout(() => { progressBar.style.display = 'none'; }, 3000);
+        }
+    }
+
+    // ---- 复制、下载、清空 ----
+    function copyOutput() {
+        const text = outputBox.textContent;
+        if (!text || text === '等待转换…') {
+            showStatus('⚠️ 没有内容可复制', 'error');
+            return;
+        }
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(text).then(() => showStatus('✅ 已复制')).catch(() => fallbackCopy(text));
+        } else {
+            fallbackCopy(text);
+        }
+    }
+    function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); showStatus('✅ 已复制'); } catch(e) { showStatus('❌ 复制失败', 'error'); }
+        document.body.removeChild(ta);
+    }
+    function downloadOutput() {
+        const text = outputBox.textContent;
+        if (!text || text === '等待转换…') {
+            showStatus('⚠️ 没有内容可下载', 'error');
+            return;
+        }
+        const blob = new Blob([text], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'douluo_worldbook.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showStatus('✅ 下载已开始', 'success');
+    }
+    function clearAll() {
+        inputEl.value = '';
+        outputBox.textContent = '等待转换…';
+        statusDiv.className = 'status';
+        fileInput.value = '';
+        progressBar.style.display = 'none';
+        progressFill.style.width = '0%';
+    }
+
+    // ---- 文件上传 ----
+    fileInput.addEventListener('change', function(e) {
+        const file = this.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                JSON.parse(ev.target.result);
+                inputEl.value = ev.target.result;
+                showStatus('✅ 文件加载成功，点击「转换」', 'success');
+            } catch(err) {
+                showStatus('❌ 文件不是有效 JSON: ' + err.message, 'error');
+            }
+        };
+        reader.onerror = () => showStatus('❌ 读取文件失败', 'error');
+        reader.readAsText(file);
+    });
+
+    // ---- 事件绑定 ----
+    convertBtn.addEventListener('click', performConversion);
+    clearBtn.addEventListener('click', clearAll);
+    copyBtn.addEventListener('click', copyOutput);
+    downloadBtn.addEventListener('click', downloadOutput);
+    inputEl.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            performConversion();
+        }
+    });
+
+    // 自动执行一次示例转换（让用户看到效果）
+    window.addEventListener('load', () => {
+        if (inputEl.value.trim()) {
+            performConversion();
+        }
+    });
+})();
+</script>
+</body>
+</html>

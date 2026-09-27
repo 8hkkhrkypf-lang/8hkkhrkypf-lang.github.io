@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tavo 世界书转换器 · 宽松版</title>
+    <!-- 引入 JSON5 宽松解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/json5@2/dist/index.min.js">
+    </script>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #0f0f13;
+            color: #e4e4e7;
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 480px;
+            width: 100%;
+            background: #1c1c24;
+            border-radius: 24px;
+            padding: 24px 20px 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border: 1px solid #2c2c38;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #a78bfa, #6ee7b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #8a8a9a;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #2a2a36;
+            padding-bottom: 16px;
+        }
+
+        .subtitle .badge {
+            display: inline-block;
+            background: #2a2a3a;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #b0b0c8;
+            margin-top: 4px;
+        }
+
+        /* ===== 上传区 ===== */
+        .upload-zone {
+            background: #14141c;
+            border: 2px dashed #3a3a4a;
+            border-radius: 16px;
+            padding: 32px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .upload-zone:active {
+            background: #1e1e2a;
+            border-color: #6e6e8a;
+            transform: scale(0.97);
+        }
+
+        .upload-zone .icon {
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+
+        .upload-zone p {
+            font-size: 15px;
+            color: #b0b0c0;
+        }
+
+        .upload-zone .hint {
+            font-size: 12px;
+            color: #6a6a7a;
+            margin-top: 6px;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ===== 文件状态 ===== */
+        .file-status {
+            display: none;
+            background: #1a1a26;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #2e2e3e;
+        }
+
+        .file-status.show {
+            display: flex;
+        }
+
+        .file-status .file-icon {
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .file-status .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-status .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-status .file-size {
+            font-size: 12px;
+            color: #7a7a8a;
+        }
+
+        .file-status .remove-btn {
+            background: none;
+            border: none;
+            color: #8a7a8a;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .file-status .remove-btn:active {
+            color: #f87171;
+        }
+
+        /* ===== 选项 ===== */
+        .options {
+            margin-top: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .options.show {
+            display: flex;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #14141c;
+            padding: 10px 14px;
+            border-radius: 12px;
+        }
+
+        .option-row label {
+            font-size: 14px;
+            color: #c0c0d0;
+        }
+
+        .option-row select {
+            background: #242436;
+            border: 1px solid #3a3a4e;
+            color: #e4e4e7;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            height: 34px;
+            min-width: 100px;
+        }
+
+        .option-row .count-badge {
+            background: #2a2a3e;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #b0b0c8;
+        }
+
+        /* ===== 转换按钮 ===== */
+        .convert-btn {
+            width: 100%;
+            padding: 16px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #7c5cfc, #5cb8f0);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 16px rgba(124, 92, 252, 0.3);
+            display: none;
+        }
+
+        .convert-btn.show {
+            display: block;
+        }
+
+        .convert-btn:active {
+            transform: scale(0.96);
+            opacity: 0.85;
+        }
+
+        .convert-btn:disabled {
+            opacity: 0.5;
+            transform: none;
+        }
+
+        /* ===== 日志 ===== */
+        .log {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: none;
+            word-break: break-word;
+        }
+
+        .log.show {
+            display: block;
+        }
+
+        .log.success {
+            background: #0f2a1f;
+            border: 1px solid #2a6a4a;
+            color: #7cdb9a;
+        }
+
+        .log.error {
+            background: #2a1518;
+            border: 1px solid #6a2a2a;
+            color: #f8a0a0;
+        }
+
+        .log.info {
+            background: #16202a;
+            border: 1px solid #2a4a6a;
+            color: #90c8f8;
+        }
+
+        .log.warning {
+            background: #2a2415;
+            border: 1px solid #6a5a2a;
+            color: #f0d080;
+        }
+
+        /* ===== 底部 ===== */
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #5a5a6a;
+            border-top: 1px solid #22222e;
+            padding-top: 16px;
+        }
+
+        .footer span {
+            color: #7a7a8e;
+        }
+
+        /* ===== 加载动画 ===== */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #14141c; }
+        ::-webkit-scrollbar-thumb { background: #3a3a4e; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📚 世界书转换器</h1>
+    <p class="subtitle">
+        RikkaHub → Tavo 格式
+        <span class="badge">✨ 支持 HTML / 宽松解析</span>
+    </p>
+
+    <!-- ===== 上传区 ===== -->
+    <div class="upload-zone" id="uploadZone">
+        <div class="icon">📂</div>
+        <p>点击选择 RikkaHub 世界书</p>
+        <div class="hint">支持包含 HTML 内容的 .json 文件</div>
+        <input type="file" id="fileInput" accept=".json">
+    </div>
+
+    <!-- ===== 文件状态 ===== -->
+    <div class="file-status" id="fileStatus">
+        <span class="file-icon">📄</span>
+        <div class="file-info">
+            <div class="file-name" id="fileName">测试.json</div>
+            <div class="file-size" id="fileSize">0 KB</div>
+        </div>
+        <button class="remove-btn" id="removeFileBtn">✕</button>
+    </div>
+
+    <!-- ===== 选项 ===== -->
+    <div class="options" id="optionsArea">
+        <div class="option-row">
+            <label>📌 条目数量</label>
+            <span class="count-badge" id="entryCount">0 条</span>
+        </div>
+        <div class="option-row">
+            <label>🔤 输出缩进</label>
+            <select id="indentSelect">
+                <option value="0">紧凑 (最小体积)</option>
+                <option value="2" selected>2 空格 (可读)</option>
+                <option value="4">4 空格</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ===== 转换按钮 ===== -->
+    <button class="convert-btn" id="convertBtn">🔄 转换并下载</button>
+
+    <!-- ===== 日志 ===== -->
+    <div class="log" id="log"></div>
+
+    <div class="footer">
+        <span>⚡ 纯前端 · 使用 JSON5 宽松解析 · 数据不上传</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // DOM 引用
+        const fileInput = document.getElementById('fileInput');
+        const uploadZone = document.getElementById('uploadZone');
+        const fileStatus = document.getElementById('fileStatus');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const optionsArea = document.getElementById('optionsArea');
+        const entryCount = document.getElementById('entryCount');
+        const convertBtn = document.getElementById('convertBtn');
+        const log = document.getElementById('log');
+        const indentSelect = document.getElementById('indentSelect');
+
+        let currentFile = null;
+        let currentJson = null;
+
+        // ============================================================
+        //  日志辅助
+        // ============================================================
+        function showLog(msg, type) {
+            log.textContent = msg;
+            log.className = 'log show ' + (type || 'info');
+        }
+
+        function hideLog() {
+            log.className = 'log';
+            log.textContent = '';
+        }
+
+        // ============================================================
+        //  文件大小格式化
+        // ============================================================
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // ============================================================
+        //  重置状态
+        // ============================================================
+        function resetFile() {
+            currentFile = null;
+            currentJson = null;
+            fileStatus.className = 'file-status';
+            optionsArea.className = 'options';
+            convertBtn.className = 'convert-btn';
+            hideLog();
+            fileInput.value = '';
+        }
+
+        // ============================================================
+        //  加载文件（使用 JSON5 宽松解析）
+        // ============================================================
+        function loadFile(file) {
+            if (!file) return;
+
+            if (!file.name.endsWith('.json')) {
+                showLog('⚠️ 请选择 .json 格式的文件', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+
+                    // 使用 JSON5.parse 代替 JSON.parse
+                    let json;
+                    try {
+                        json = JSON5.parse(text);
+                    } catch (err5) {
+                        // 如果 JSON5 也失败，尝试用标准 JSON 解析（兼容性）
+                        try {
+                            json = JSON.parse(text);
+                        } catch (errStd) {
+                            showLog('❌ 解析失败（JSON5 和标准 JSON 均失败）: ' + err5.message, 'error');
+                            return;
+                        }
+                    }
+
+                    // 校验结构
+                    if (!json.version || !json.type || json.type !== 'lorebook' || !json.data || !json.data.entries) {
+                        showLog('⚠️ 不是有效的 RikkaHub 世界书格式 (缺少 version/type/lorebook/data.entries)', 'error');
+                        return;
+                    }
+
+                    if (!Array.isArray(json.data.entries) || json.data.entries.length === 0) {
+                        showLog('⚠️ 世界书条目为空 (entries 数组为空)', 'error');
+                        return;
+                    }
+
+                    // 保存
+                    currentFile = file;
+                    currentJson = json;
+
+                    // 更新 UI
+                    fileName.textContent = file.name;
+                    fileSize.textContent = formatSize(file.size);
+                    fileStatus.className = 'file-status show';
+                    entryCount.textContent = json.data.entries.length + ' 条';
+                    optionsArea.className = 'options show';
+                    convertBtn.className = 'convert-btn show';
+                    showLog('✅ 解析成功！共 ' + json.data.entries.length + ' 条条目。', 'success');
+
+                } catch (err) {
+                    showLog('❌ 未知错误: ' + err.message, 'error');
+                    console.error(err);
+                }
+            };
+
+            reader.onerror = function() {
+                showLog('❌ 读取文件失败，请重试', 'error');
+            };
+
+            reader.readAsText(file);
+        }
+
+        // ============================================================
+        //  转换核心逻辑（与之前相同，但保留原样）
+        // ============================================================
+        function convertRikkaToTavo(rikkaJson) {
+            const entries = rikkaJson.data.entries;
+            const tavoEntries = {};
+
+            entries.forEach(function(entry, idx) {
+                let roleVal = 2;
+                if (entry.role === 'user') roleVal = 0;
+                else if (entry.role === 'system') roleVal = 1;
+
+                const enabled = entry.enabled !== undefined ? entry.enabled : true;
+                const constantVal = entry.constantActive !== undefined ? entry.constantActive : false;
+                const keyVal = Array.isArray(entry.keywords) ? entry.keywords : [];
+                const scanDepthVal = entry.scanDepth !== undefined ? entry.scanDepth : 4;
+                const depthVal = entry.injectDepth !== undefined ? entry.injectDepth : 4;
+
+                const tavoEntry = {
+                    uid: idx,
+                    disable: !enabled,
+                    use_regex: entry.useRegex || false,
+                    name: entry.name || '',
+                    comment: '',
+                    content: entry.content || '',
+                    constant: constantVal,
+                    vectorized: false,
+                    selective: false,
+                    selectiveLogic: 0,
+                    caseSensitive: entry.caseSensitive || false,
+                    matchWholeWords: true,
+                    useGroupScoring: false,
+                    excludeRecursion: false,
+                    preventRecursion: false,
+                    delayUntilRecursion: false,
+                    useProbability: true,
+                    groupOverride: false,
+                    position: 1,
+                    depth: depthVal,
+                    role: roleVal,
+                    scanDepth: scanDepthVal,
+                    probability: 100,
+                    sticky: 0,
+                    cooldown: 0,
+                    delay: 0,
+                    groupWeight: 100,
+                    display_index: idx + 1,
+                    order: idx + 1,
+                    key: keyVal,
+                    keysecondary: [],
+                    group: '',
+                };
+                tavoEntries[String(idx)] = tavoEntry;
+            });
+
+            return {
+                tavo_spec: 'lorebook',
+                tavo_spec_version: 2,
+                entries: tavoEntries
+            };
+        }
+
+        // ============================================================
+        //  下载 JSON
+        // ============================================================
+        function downloadJson(obj, filename, indent) {
+            const spacer = indent === 0 ? null : indent;
+            const jsonStr = JSON.stringify(obj, null, spacer);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            setTimeout(function() {
+                URL.revokeObjectURL(url);
+            }, 5000);
+        }
+
+        // ============================================================
+        //  转换按钮点击
+        // ============================================================
+        convertBtn.addEventListener('click', function() {
+            if (!currentJson) {
+                showLog('⚠️ 请先选择一个有效的 RikkaHub 世界书文件', 'error');
+                return;
+            }
+
+            const indentVal = parseInt(indentSelect.value, 10);
+
+            try {
+                const result = convertRikkaToTavo(currentJson);
+                const baseName = currentFile ? currentFile.name.replace(/\.json$/i, '') : 'converted';
+                const outputName = baseName + '_Tavo.json';
+
+                downloadJson(result, outputName, indentVal);
+
+                showLog('✅ 转换成功！已下载: ' + outputName + ' (共 ' + currentJson.data.entries.length + ' 条)', 'success');
+            } catch (err) {
+                showLog('❌ 转换失败: ' + err.message, 'error');
+                console.error(err);
+            }
+        });
+
+        // ============================================================
+        //  移除文件
+        // ============================================================
+        removeFileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            resetFile();
+        });
+
+        // ============================================================
+        //  上传事件
+        // ============================================================
+        uploadZone.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                fileInput.click();
+            }
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                loadFile(this.files[0]);
+            }
+        });
+
+        // 拖拽支持
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#7c5cfc';
+        });
+
+        uploadZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#3a3a4a';
+        });
+
+        uploadZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#3a3a4a';
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                loadFile(files[0]);
+            }
+        });
+
+        // 初始化提示
+        showLog('📖 选择 RikkaHub 导出的世界书 .json 文件（支持内嵌 HTML）', 'info');
+    })();
+</script>
+
+</body>
+</html>
