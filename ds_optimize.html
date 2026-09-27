@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>PiuPiu → Rikkahub 世界树转换器 v4</title>
+<style>
+:root{
+  --bg:#eef2f7; --card:#fff; --fg:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --brand:#2563eb; --ok:#16a34a; --warn:#d97706; --err:#dc2626; --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0b1220; --card:#111827; --fg:#e5e7eb; --muted:#94a3b8; --line:#1f2937; --brand:#3b82f6; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font:15px/1.55 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding:12px 12px calc(96px + env(safe-area-inset-bottom));
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:880px;margin:0 auto}
+h1{font-size:1.1rem;margin:6px 0 2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{font-size:.67rem;font-weight:700;background:var(--brand);color:#fff;border-radius:999px;padding:2px 8px}
+.sub{color:var(--muted);font-size:.79rem;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card h2{font-size:.92rem;margin:0 0 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+label{font-size:.85rem;font-weight:600;display:block;margin-bottom:4px}
+.hint{font-size:.74rem;color:var(--muted);font-weight:400;margin-top:3px;line-height:1.45}
+textarea,input[type=text],input[type=number],select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;
+  background:var(--bg);color:var(--fg);font-size:.85rem;font-family:inherit;
+}
+textarea{min-height:170px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;resize:vertical}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--brand);background:var(--card)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.row>*{flex:1 1 150px;min-width:0}
+.field{margin-bottom:13px}
+.field:last-child{margin-bottom:0}
+.filerow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.fname{font-size:.77rem;color:var(--muted);word-break:break-all;flex:1 1 100%}
+.check{display:flex;align-items:flex-start;gap:9px;margin:10px 0;cursor:pointer}
+.check input{width:20px;height:20px;flex:0 0 20px;margin-top:1px;accent-color:var(--brand)}
+.check span{font-size:.84rem;line-height:1.35;font-weight:400}
+details{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+details[open]{border-style:solid}
+summary{cursor:pointer;font-size:.88rem;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"▾";color:var(--muted);font-weight:400}
+details[open] summary::after{content:"▴"}
+details .body{padding-top:12px}
+.btn{
+  border:none;border-radius:12px;padding:12px 16px;font-size:.9rem;font-weight:700;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--brand);color:#fff;transition:transform .1s;min-height:46px;
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+.btn.gray{background:#64748b}
+.btn.sm{padding:8px 12px;font-size:.78rem;min-height:38px;border-radius:10px}
+.btn.tiny{padding:6px 10px;font-size:.74rem;min-height:32px;border-radius:9px;background:var(--warn)}
+.filelabel{
+  display:inline-flex;align-items:center;gap:6px;background:var(--brand);color:#fff;
+  padding:10px 16px;border-radius:12px;font-size:.85rem;font-weight:700;cursor:pointer;
+}
+input[type=file]{display:none}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0 0;display:none}
+.bar>i{display:block;height:100%;width:0;background:var(--brand);transition:width .18s}
+.status{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;font-size:.82rem;word-break:break-word}
+.status.ok{display:block;background:#dcfce7;color:#14532d}
+.status.err{display:block;background:#fee2e2;color:#7f1d1d}
+.status.info{display:block;background:#dbeafe;color:#1e3a8a}
+.status.warn{display:block;background:#fef3c7;color:#78350f}
+.report{display:none;margin-top:12px;font-size:.79rem;line-height:1.6}
+.report ul{margin:6px 0 0;padding-left:17px}
+.report li{margin:4px 0;word-break:break-word}
+.report .k{color:var(--muted)}
+.report .ok{color:var(--ok);font-weight:700}
+.report .bad{color:var(--err);font-weight:700}
+.output{
+  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px;
+  font:0.72rem/1.5 ui-monospace,Menlo,Consolas,monospace;
+  white-space:pre-wrap;word-break:break-all;max-height:44vh;overflow:auto;
+  border:1px solid #1e293b;-webkit-overflow-scrolling:touch;
+}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:.74rem;color:var(--muted);margin-bottom:8px}
+.footer{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  background:var(--card);border-top:1px solid var(--line);
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  display:flex;gap:8px;box-shadow:0 -6px 20px rgba(0,0,0,.06);
+}
+.footer .btn{flex:1}
+@media (max-width:420px){ .btn{font-size:.81rem;padding:11px 8px} h1{font-size:1rem} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📚 PiuPiu → Rikkahub <span class="badge">v4 · 对齐实测枚举</span></h1>
+  <p class="sub">输出严格遵循 Rikkahub <code>type: lorebook</code> 的 13 字段结构与顺序；position 只用 5 个实测值，数值字段强制整数、范围 ±999999999。</p>
+
+  <div class="card">
+    <h2>① 输入</h2>
+    <div class="filerow">
+      <label class="filelabel" for="fileInput">📂 选择 .json 文件</label>
+      <input type="file" id="fileInput" accept=".json,.txt,application/json,text/plain">
+      <button class="btn ghost sm" id="sampleBtn" type="button">载入示例</button>
+      <button class="btn ghost sm" id="clearBtn" type="button">清空</button>
+      <div class="fname" id="fileName">未选择文件</div>
+    </div>
+    <label for="inputJson">或直接粘贴 JSON</label>
+    <textarea id="inputJson" spellcheck="false" placeholder='{"name":"...","entries":[...]}'></textarea>
+    <div class="hint">自动识别方向：含 <code>entries</code> 的 PiuPiu/酒馆世界书 → 完整转换；已是 <code>{type:"lorebook", data:{...}}</code> → 走「规范化 + 校验」。</div>
+  </div>
+
+  <div class="card">
+    <h2>② 转换选项</h2>
+    <details id="optBox" open>
+      <summary>高级设置（默认即可用）</summary>
+      <div class="body">
+
+        <div class="field">
+          <label for="posMode">注入位置 position</label>
+          <select id="posMode">
+            <option value="smart" selected>智能映射（推荐）：before→系统提示词前 / after→系统提示词后 / at_depth→在深度</option>
+            <option value="uniform">全部统一到某一个位置</option>
+            <option value="custom">自定义映射（每个来源各选一个）</option>
+          </select>
+
+          <div id="uniformBox" style="display:none;margin-top:8px">
+            <label for="uniformPos">统一使用</label>
+            <select id="uniformPos"></select>
+          </div>
+
+          <div id="customPos" style="display:none;margin-top:8px">
+            <div class="row">
+              <div><label for="posBefore">原 before_*</label><select id="posBefore"></select></div>
+              <div><label for="posAfter">原 after_*</label><select id="posAfter"></select></div>
+              <div><label for="posDepth">原 at_depth</label><select id="posDepth"></select></div>
+            </div>
+          </div>
+
+          <div class="hint">
+            Rikkahub 实测合法值仅 5 个：<br>
+            <code>before_system_prompt</code>（系统提示词前）<br>
+            <code>after_system_prompt</code>（系统提示词后）<br>
+            <code>top_of_chat</code>（对话开头）<br>
+            <code>bottom_of_chat</code>（最新消息前）<br>
+            <code>at_depth</code>（在深度）
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="roleMode">角色 role</label>
+          <select id="roleMode">
+            <option value="user" selected>统一为 user（Rikkahub 实测默认值）</option>
+            <option value="keep">保留原值（PiuPiu 多为 system）</option>
+            <option value="system">统一为 system</option>
+            <option value="assistant">统一为 assistant（助手预填充）</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="keywordMode">关键词来源</label>
+          <select id="keywordMode">
+            <option value="keys" selected>只用 keys（主关键词）</option>
+            <option value="withSecondary">keys + secondary_keys 合并</option>
+            <option value="none">全部清空（纯常驻）</option>
+          </select>
+          <div class="hint">常驻条目也允许带关键词（实测可并存），这里不按常驻做过滤。</div>
+        </div>
+
+        <div class="field">
+          <label for="prioritySource">priority 取值</label>
+          <select id="prioritySource">
+            <option value="priority" selected>用原 priority</option>
+            <option value="insertion_order">用 insertion_order（保注入顺序）</option>
+          </select>
+          <div class="hint">Rikkahub 条目没有插入顺序字段。若原书 priority 全同而 insertion_order 有区分，转换后会在报告里提示一键切换。</div>
+        </div>
+
+        <div class="field">
+          <label for="scanMode">扫描深度 scanDepth</label>
+          <select id="scanMode">
+            <option value="auto" selected>自动：条目值 → 世界书 scan_depth → 兜底值</option>
+            <option value="world">统一用世界书 scan_depth</option>
+            <option value="fixed">统一固定值（Rikkahub 原版惯例 4）</option>
+          </select>
+          <div class="row" style="margin-top:8px">
+            <div><label for="scanFixed">兜底 / 固定值</label><input type="number" id="scanFixed" value="4" min="-999999999" max="999999999" step="1"></div>
+            <div><label for="depthFixed">injectDepth 兜底</label><input type="number" id="depthFixed" value="4" min="-999999999" max="999999999" step="1"></div>
+          </div>
+          <div class="hint">scanDepth = 扫描最近 N 条消息；injectDepth 仅在 position=at_depth 时生效。范围 -999999999 ~ 999999999，必须是整数。</div>
+        </div>
+
+        <label class="check"><input type="checkbox" id="optRepair" checked>
+          <span>智能修复：content 是 JSON 字符串的条目自动展开
+            <span class="hint">例如名字变成 “Entry 46”、正文其实是一整坨 <code>{"name":...,"keys":[...]}</code> 的脏数据。</span>
+          </span>
+        </label>
+
+        <label class="check"><input type="checkbox" id="optDropDisabled">
+          <span>丢弃已禁用条目（不写入输出）
+            <span class="hint">PiuPiu 里常有几个留空的模板条目禁用了，留着也无害；勾上则直接剔除。</span>
+          </span>
+        </label>
+
+        <label class="check"><input type="checkbox" id="optFlatten">
+          <span>压平正文为一整行（去掉所有换行）
+            <span class="hint">⚠️ Rikkahub 会保留 <code>\n\n</code>，除非你明确想要单行，否则别勾。</span>
+          </span>
+        </label>
+
+        <label class="check"><input type="checkbox" id="optPretty" checked>
+          <span>美化输出（缩进 2 空格）</span>
+        </label>
+
+      </div>
+    </details>
+
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <div class="status" id="status"></div>
+    <div class="report" id="report"></div>
+  </div>
+
+  <div class="card">
+    <h2>③ 结果</h2>
+    <div class="meta">
+      <span id="outMeta">等待转换…</span>
+      <span id="previewNote"></span>
+    </div>
+    <div class="output" id="outputBox">等待转换…</div>
+  </div>
+</div>
+
+<div class="footer">
+  <button class="btn" id="convertBtn" type="button">🔄 转换</button>
+  <button class="btn gray" id="copyBtn" type="button">📋 复制</button>
+  <button class="btn gray" id="downloadBtn" type="button">⬇️ 下载</button>
+  <button class="btn gray" id="shareBtn" type="button" style="display:none">📤 分享</button>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var $ = function(id){ return document.getElementById(id); };
+var state = { text: '', name: 'rikkahub_worldbook.json', busy: false, last: null };
+
+/* ================= 常量 ================= */
+var MINNUM = -999999999, MAXNUM = 999999999;
+
+var FIELD_ORDER = ['id','name','enabled','priority','position','content','injectDepth','role','keywords','useRegex','caseSensitive','scanDepth','constantActive'];
+var DATA_ORDER  = ['id','name','description','enabled','entries'];
+
+var RIKKA_POSITIONS = ['before_system_prompt','after_system_prompt','top_of_chat','bottom_of_chat','at_depth'];
+var POS_LABEL = {
+  before_system_prompt: '系统提示词前',
+  after_system_prompt:  '系统提示词后',
+  top_of_chat:          '对话开头',
+  bottom_of_chat:       '最新消息前',
+  at_depth:             '在深度'
+};
+/* 语义最贴近的对位：PiuPiu/酒馆 → Rikkahub */
+var SMART_TARGET = {
+  before: 'before_system_prompt',
+  after:  'after_system_prompt',
+  depth:  'at_depth'
+};
+
+var ROLES = ['user','system','assistant'];
+
+var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+var PREVIEW_LIMIT = 40000;
+var PLACEHOLDER_RE = /[（(]\s*这里|举例\s*[:：]|请填|待填|这里是名称|这里是内容/;
+
+/* ================= 基础工具 ================= */
+function uuid(){
+  if (window.crypto && typeof crypto.randomUUID === 'function'){
+    try { return crypto.randomUUID(); } catch(_){}
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+    var r = Math.random()*16|0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+function isObj(v){ return !!v && typeof v === 'object' && !Array.isArray(v); }
+function isInt(v){ return typeof v === 'number' && isFinite(v) && Math.floor(v) === v; }
+function nonInt(v){ return typeof v === 'number' && isFinite(v) && Math.floor(v) !== v; }
+function pickNum(){
+  for (var i=0;i<arguments.length;i++){
+    var v = arguments[i];
+    if (v === null || v === undefined || v === '') continue;
+    var n = typeof v === 'number' ? v : Number(v);
+    if (isFinite(n)) return n;
+  }
+  return undefined;
+}
+function pickStr(){
+  for (var i=0;i<arguments.length;i++){
+    var v = arguments[i];
+    if (typeof v === 'string' && v.trim() !== '') return v.trim();
+  }
+  return '';
+}
+function truthy(v){ return v === true || v === 'true' || v === 1 || v === '1'; }
+function clampInt(v, min, max, dflt){
+  var n = pickNum(v);
+  if (n === undefined) n = dflt;
+  n = Math.round(n);
+  if (n < min) n = min;
+  if (n > max) n = max;
+  return n;
+}
+function dedupe(arr){
+  var seen = {}, out = [];
+  for (var i=0;i<arr.length;i++){
+    var s = String(arr[i] == null ? '' : arr[i]).trim();
+    if (!s || seen[s]) continue;
+    seen[s] = 1; out.push(s);
+  }
+  return out;
+}
+function toKeywords(v){
+  if (Array.isArray(v)) return v.filter(function(x){ return typeof x === 'string'; });
+  if (typeof v === 'string' && v.trim()) return v.split(/[,，\n]/).map(function(s){ return s.trim(); }).filter(Boolean);
+  return [];
+}
+function entriesToList(v){
+  if (Array.isArray(v)) return v.filter(isObj);
+  if (isObj(v)) return Object.keys(v).map(function(k){ return v[k]; }).filter(isObj);
+  return [];
+}
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];
+  });
+}
+function safeName(n){
+  return String(n||'worldbook').replace(/[\\/:*?"<>|\s]+/g,'_').slice(0,60) || 'worldbook';
+}
+function mapText(m, labeller){
+  var ks = Object.keys(m).sort(function(a,b){ return m[b]-m[a]; });
+  function lab(k){ return labeller ? labeller(k) : esc(k); }
+  if (ks.length > 4) return ks.slice(0,4).map(function(k){ return lab(k)+'×'+m[k]; }).join('、') + ' 等' + ks.length + '种';
+  return ks.map(function(k){ return lab(k)+'×'+m[k]; }).join('、');
+}
+
+/* ================= 位置 / 角色 ================= */
+var POS_ALIAS = {
+  before_character_definition:'before', before_char:'before', before_character:'before',
+  before_author_note:'before', before_an:'before', top:'before', start:'before',
+  after_character_definition:'after', after_char:'after', after_character:'after',
+  after_author_note:'after', after_an:'after', bottom:'after', end:'after',
+  at_depth:'depth', in_chat:'depth', depth:'depth',
+  before_system_prompt:'before', after_system_prompt:'after',
+  top_of_chat:'after', bottom_of_chat:'after'
+};
+var NUM_POS = ['before','after','before','after','depth']; /* 0..4 → 酒馆语义 */
+function posBucket(raw){
+  if (typeof raw === 'number' && isFinite(raw)) return NUM_POS[raw] || 'after';
+  if (typeof raw === 'string'){
+    var k = raw.trim().toLowerCase().replace(/[\s\-]+/g,'_');
+    if (POS_ALIAS[k]) return POS_ALIAS[k];
+  }
+  return 'after';
+}
+function resolvePosition(bucket, opt){
+  if (opt.posMode === 'uniform') return opt.uniformPos;
+  if (opt.posMode === 'custom')  return pickStr(opt.customPos[bucket], SMART_TARGET[bucket]);
+  return SMART_TARGET[bucket];
+}
+function normRole(v){
+  if (typeof v === 'number' && isFinite(v)) return ['system','user','assistant'][v] || 'user';
+  var s = String(v == null ? '' : v).trim().toLowerCase();
+  if (s === 'user' || s === 'assistant' || s === 'system') return s;
+  return 'user';
+}
+
+/* ================= 统一出条目（保证字段与顺序） ================= */
+function makeEntry(o){
+  return {
+    id: (typeof o.id === 'string' && UUID_RE.test(o.id)) ? o.id : uuid(),
+    name: pickStr(o.name) || 'Entry',
+    enabled: (o.enabled === undefined) ? true : truthy(o.enabled),
+    priority: clampInt(o.priority, MINNUM, MAXNUM, 0),
+    position: pickStr(o.position) || 'after_system_prompt',
+    content: typeof o.content === 'string' ? o.content : '',
+    injectDepth: clampInt(o.injectDepth, MINNUM, MAXNUM, 4),
+    role: pickStr(o.role) || 'user',
+    keywords: Array.isArray(o.keywords) ? dedupe(o.keywords) : [],
+    useRegex: truthy(o.useRegex),
+    caseSensitive: truthy(o.caseSensitive),
+    scanDepth: clampInt(o.scanDepth, MINNUM, MAXNUM, 4),
+    constantActive: truthy(o.constantActive)
+  };
+}
+
+/* ================= 脏数据修复 ================= */
+function tryUnwrap(o){
+  if (!isObj(o)) return null;
+  var c = o.content;
+  if (typeof c !== 'string') return null;
+  var t = c.trim();
+  if (t.length < 4 || t.charAt(0) !== '{' || t.indexOf('"content"') === -1) return null;
+  var inner;
+  try { inner = JSON.parse(t); } catch(e){ return null; }
+  if (!isObj(inner) || typeof inner.content !== 'string') return null;
+  if (!('keys' in inner || 'key' in inner || 'name' in inner || 'comment' in inner)) return null;
+  return inner;
+}
+
+/* ================= 统计 ================= */
+function newStats(total){
+  return {
+    total: total, out: 0, enabled: 0, disabled: 0, skipped: 0,
+    constant: 0, keyworded: 0, both: 0, neither: 0, empty: 0,
+    repaired: 0, repairedNames: [], templates: [], coerced: 0,
+    kwMap: {}, nameMap: {}, ioValues: {}, prValues: {},
+    scanValues: {}, posValues: {}, roleValues: {}
+  };
+}
+function tallyEntry(e, st){
+  st.out++;
+  if (e.enabled) st.enabled++; else st.disabled++;
+  var hasKw = e.keywords.length > 0;
+  if (e.constantActive) st.constant++;
+  if (hasKw) st.keyworded++;
+  if (e.constantActive && hasKw) st.both++;
+  if (!e.constantActive && !hasKw) st.neither++;
+  if (!e.content.trim()) st.empty++;
+  for (var i=0;i<e.keywords.length;i++){
+    st.kwMap[e.keywords[i]] = (st.kwMap[e.keywords[i]] || 0) + 1;
+  }
+  st.nameMap[e.name] = (st.nameMap[e.name] || 0) + 1;
+  st.scanValues[e.scanDepth] = (st.scanValues[e.scanDepth] || 0) + 1;
+  st.posValues[e.position] = (st.posValues[e.position] || 0) + 1;
+  st.roleValues[e.role] = (st.roleValues[e.role] || 0) + 1;
+  if (PLACEHOLDER_RE.test(e.name) || PLACEHOLDER_RE.test(e.content.slice(0, 300))){
+    if (st.templates.length < 8) st.templates.push(e.name);
+  }
+}
+
+/* ================= 主转换：PiuPiu → Rikkahub ================= */
+function convertPiuPiu(src, opt, onProgress){
+  return new Promise(function(resolve, reject){
+    var list = entriesToList(src.entries);
+    if (!list.length) return reject(new Error('没找到 entries（应为数组或对象）'));
+
+    var st = newStats(list.length);
+    var out = [];
+    var BATCH = 120, i = 0;
+
+    function step(){
+      try {
+        var end = Math.min(i + BATCH, list.length);
+        for (; i < end; i++){
+          var orig = list[i], e = orig;
+
+          /* —— 智能修复 —— */
+          if (opt.repair){
+            var inner = tryUnwrap(orig);
+            if (inner){
+              e = Object.assign({}, orig, {
+                name: inner.name || inner.comment || orig.name || orig.comment,
+                comment: inner.comment || orig.comment,
+                content: inner.content,
+                keys: inner.keys || inner.key || orig.keys,
+                constant: (inner.constant === undefined ? orig.constant : inner.constant),
+                enabled: (inner.enabled === undefined ? orig.enabled : inner.enabled),
+                use_regex: (inner.use_regex === undefined ? orig.use_regex : inner.use_regex)
+              });
+              st.repaired++;
+              st.repairedNames.push(pickStr(e.name, e.comment) || '(无名)');
+            }
+          }
+
+          var enabled = (e.enabled === undefined) ? true : truthy(e.enabled);
+          if (opt.dropDisabled && !enabled){ st.skipped++; continue; }
+
+          var ext = isObj(e.extensions) ? e.extensions : {};
+
+          /* —— content：默认保留换行 —— */
+          var raw = typeof e.content === 'string' ? e.content : (e.content == null ? '' : String(e.content));
+          raw = raw.replace(/\r\n?/g, '\n');
+          var content;
+          if (opt.flatten){
+            content = raw.replace(/\s*\n+\s*/g, ' ').replace(/[ \t]{2,}/g, ' ').trim();
+          } else {
+            content = raw.replace(/[ \t]+$/gm, '').replace(/^\n+/, '').replace(/\n+$/, '');
+          }
+
+          /* —— keywords：常驻不过滤 —— */
+          var kws = [];
+          if (opt.keywordMode === 'keys') kws = toKeywords(e.keys);
+          else if (opt.keywordMode === 'withSecondary') kws = toKeywords(e.keys).concat(toKeywords(e.secondary_keys));
+          kws = dedupe(kws);
+
+          /* —— priority —— */
+          var io = pickNum(e.insertion_order, ext.display_index, 0);
+          st.ioValues[io] = (st.ioValues[io] || 0) + 1;
+          var pr = pickNum(e.priority, 0);
+          st.prValues[pr] = (st.prValues[pr] || 0) + 1;
+          var priority = (opt.prioritySource === 'insertion_order') ? io : pr;
+
+          /* —— depths —— */
+          var entryScan = pickNum(e.scanDepth, ext.scan_depth);
+          var worldScan = pickNum(src.scan_depth);
+          var scanDepth;
+          if (opt.scanMode === 'fixed') scanDepth = opt.scanFixed;
+          else if (opt.scanMode === 'world') scanDepth = (worldScan === undefined ? opt.scanFixed : worldScan);
+          else {
+            scanDepth = entryScan;
+            if (scanDepth === undefined) scanDepth = worldScan;
+            if (scanDepth === undefined) scanDepth = opt.scanFixed;
+          }
+          var injectDepth = pickNum(e.depth, ext.depth, opt.depthFixed);
+
+          /* —— 非整数检测（Rikkahub 要求整数，会被四舍五入） —— */
+          if (nonInt(priority) || nonInt(scanDepth) || nonInt(injectDepth)) st.coerced++;
+
+          /* —— role —— */
+          var role = (opt.roleMode === 'keep')
+            ? normRole(e.role !== undefined ? e.role : ext.role)
+            : opt.roleMode;
+
+          var caseSensitive = truthy(e.case_sensitive !== undefined ? e.case_sensitive : ext.case_sensitive);
+          var useRegex = truthy(e.use_regex !== undefined ? e.use_regex : ext.use_regex);
+
+          var rawPos = (e.position !== undefined && e.position !== null) ? e.position : ext.position;
+
+          var entry = makeEntry({
+            name: pickStr(e.name, e.comment),
+            enabled: enabled,
+            priority: priority,
+            position: resolvePosition(posBucket(rawPos), opt),
+            content: content,
+            injectDepth: injectDepth,
+            role: role,
+            keywords: kws,
+            useRegex: useRegex,
+            caseSensitive: caseSensitive,
+            scanDepth: scanDepth,
+            constantActive: truthy(e.constant)
+          });
+
+          tallyEntry(entry, st);
+          out.push(entry);
+        }
+        if (onProgress) onProgress(i, list.length);
+        if (i < list.length){ setTimeout(step, 0); return; }
+
+        var result = {
+          version: 1,
+          type: 'lorebook',
+          data: {
+            id: uuid(),
+            name: pickStr(src.name, 'PiuPiu 世界书'),
+            description: (typeof src.description === 'string' ? src.description : ''),
+            enabled: (src.enabled === undefined) ? true : truthy(src.enabled),
+            entries: out
+          }
+        };
+        resolve({ result: result, stats: st, mode: 'convert' });
+      } catch(err){ reject(err); }
+    }
+    step();
+  });
+}
+
+/* ================= 规范化：输入已是 Rikkahub ================= */
+function normalizeRikkahub(src, opt, onProgress){
+  return new Promise(function(resolve, reject){
+    var list = entriesToList(src.data && src.data.entries);
+    if (!list.length) return reject(new Error('Rikkahub 结构里没有 entries'));
+
+    var st = newStats(list.length);
+    var out = [];
+    var BATCH = 120, i = 0;
+
+    function step(){
+      try {
+        var end = Math.min(i + BATCH, list.length);
+        for (; i < end; i++){
+          var e = list[i];
+          if (nonInt(e.priority) || nonInt(e.scanDepth) || nonInt(e.injectDepth)) st.coerced++;
+          var entry = makeEntry({
+            id: e.id, name: e.name, enabled: e.enabled,
+            priority: e.priority, position: e.position, content: e.content,
+            injectDepth: e.injectDepth, role: e.role, keywords: e.keywords,
+            useRegex: e.useRegex, caseSensitive: e.caseSensitive,
+            scanDepth: e.scanDepth, constantActive: e.constantActive
+          });
+          tallyEntry(entry, st);
+          out.push(entry);
+        }
+        if (onProgress) onProgress(i, list.length);
+        if (i < list.length){ setTimeout(step, 0); return; }
+
+        var d = src.data || {};
+        var result = {
+          version: 1,
+          type: 'lorebook',
+          data: {
+            id: (typeof d.id === 'string' && UUID_RE.test(d.id)) ? d.id : uuid(),
+            name: pickStr(d.name, '未命名世界书'),
+            description: (typeof d.description === 'string' ? d.description : ''),
+            enabled: (d.enabled === undefined) ? true : truthy(d.enabled),
+            entries: out
+          }
+        };
+        resolve({ result: result, stats: st, mode: 'normalize' });
+      } catch(err){ reject(err); }
+    }
+    step();
+  });
+}
+
+/* ================= 结构校验 ================= */
+function validateResult(r){
+  var errs = [], warns = [];
+  if (r.version !== 1) errs.push('version 应为数字 1');
+  if (r.type !== 'lorebook') errs.push('type 应为 "lorebook"');
+  if (!isObj(r.data)) return { errs: ['缺少 data 对象'], warns: [], count: 0 };
+
+  var d = r.data;
+  if (Object.keys(d).join(',') !== DATA_ORDER.join(',')) errs.push('data 字段顺序/集合不符：' + Object.keys(d).join(','));
+  if (!UUID_RE.test(String(d.id||''))) errs.push('data.id 不是合法 UUID');
+  if (typeof d.name !== 'string') errs.push('data.name 非字符串');
+  if (typeof d.description !== 'string') errs.push('data.description 非字符串');
+  if (typeof d.enabled !== 'boolean') errs.push('data.enabled 非布尔');
+  if (!Array.isArray(d.entries)) errs.push('data.entries 非数组');
+
+  var list = Array.isArray(d.entries) ? d.entries : [];
+  var orderBad = 0, typeBad = 0;
+
+  for (var i=0;i<list.length;i++){
+    var e = list[i];
+
+    if (Object.keys(e).join(',') !== FIELD_ORDER.join(',')){
+      orderBad++;
+      if (orderBad <= 2) errs.push('条目 ' + (i+1) + ' 字段集合/顺序不符：' + Object.keys(e).join(','));
+    }
+
+    var bad = [];
+    if (!UUID_RE.test(String(e.id||''))) bad.push('id');
+    if (typeof e.name !== 'string' || !e.name) bad.push('name');
+    if (typeof e.enabled !== 'boolean') bad.push('enabled');
+    if (!isInt(e.priority)) bad.push('priority(需整数)');
+    if (typeof e.position !== 'string') bad.push('position');
+    if (typeof e.content !== 'string') bad.push('content');
+    if (!isInt(e.injectDepth)) bad.push('injectDepth(需整数)');
+    if (typeof e.role !== 'string') bad.push('role');
+    if (!Array.isArray(e.keywords)) bad.push('keywords');
+    if (typeof e.useRegex !== 'boolean') bad.push('useRegex');
+    if (typeof e.caseSensitive !== 'boolean') bad.push('caseSensitive');
+    if (!isInt(e.scanDepth)) bad.push('scanDepth(需整数)');
+    if (typeof e.constantActive !== 'boolean') bad.push('constantActive');
+
+    if (isInt(e.priority)    && (e.priority    < MINNUM || e.priority    > MAXNUM)) bad.push('priority(超范围)');
+    if (isInt(e.injectDepth) && (e.injectDepth < MINNUM || e.injectDepth > MAXNUM)) bad.push('injectDepth(超范围)');
+    if (isInt(e.scanDepth)   && (e.scanDepth   < MINNUM || e.scanDepth   > MAXNUM)) bad.push('scanDepth(超范围)');
+
+    if (RIKKA_POSITIONS.indexOf(e.position) < 0) bad.push('position(非法值 "' + e.position + '")');
+    if (ROLES.indexOf(e.role) < 0) bad.push('role(非法值 "' + e.role + '")');
+
+    if (bad.length){
+      typeBad++;
+      if (typeBad <= 3) errs.push('条目 ' + (i+1) + '（' + esc(e.name||'') + '）类型/取值错误：' + bad.join('、'));
+    }
+
+    if (e.enabled && !e.constantActive && (!e.keywords || !e.keywords.length)){
+      if (warns.length < 5) warns.push('「' + e.name + '」既不常驻也无关键词，永远不会触发');
+    }
+  }
+
+  return { errs: errs.slice(0,12), warns: warns, orderBad: orderBad, typeBad: typeBad, count: list.length };
+}
+
+/* ================= 选项 ================= */
+function readOptions(){
+  return {
+    posMode: $('posMode').value,
+    uniformPos: $('uniformPos').value,
+    customPos: {
+      before: $('posBefore').value,
+      after:  $('posAfter').value,
+      depth:  $('posDepth').value
+    },
+    roleMode: $('roleMode').value,
+    keywordMode: $('keywordMode').value,
+    prioritySource: $('prioritySource').value,
+    scanMode: $('scanMode').value,
+    scanFixed: clampInt($('scanFixed').value, MINNUM, MAXNUM, 4),
+    depthFixed: clampInt($('depthFixed').value, MINNUM, MAXNUM, 4),
+    repair: $('optRepair').checked,
+    dropDisabled: $('optDropDisabled').checked,
+    flatten: $('optFlatten').checked,
+    pretty: $('optPretty').checked
+  };
+}
+
+/* ================= UI ================= */
+var statusEl = $('status'), bar = $('bar'), barFill = $('barFill');
+var reportEl = $('report'), outputBox = $('outputBox');
+
+function say(msg, type){
+  statusEl.className = 'status ' + (type || 'info');
+  statusEl.innerHTML = msg;
+  if (type !== 'err'){
+    clearTimeout(statusEl._t);
+    statusEl._t = setTimeout(function(){ statusEl.className = 'status'; }, 9000);
+  }
+}
+function setBusy(b){
+  state.busy = b;
+  $('convertBtn').disabled = b;
+  $('convertBtn').textContent = b ? '⏳ 处理中…' : '🔄 转换';
+}
+function progress(done, total){
+  if (!total) return;
+  bar.style.display = 'block';
+  barFill.style.width = Math.round(done / total * 100) + '%';
+}
+
+/* 初始化三个自定义映射下拉 */
+function fillPositionSelects(){
+  var defs = {
+    uniformPos: 'after_system_prompt',
+    posBefore:  'before_system_prompt',
+    posAfter:   'after_system_prompt',
+    posDepth:   'at_depth'
+  };
+  Object.keys(defs).forEach(function(id){
+    var sel = $(id);
+    if (!sel) return;
+    sel.innerHTML = RIKKA_POSITIONS.map(function(p){
+      return '<option value="' + p + '">' + POS_LABEL[p] + '　' + p + '</option>';
+    }).join('');
+    sel.value = defs[id];
+  });
+}
+
+function syncPosBoxes(){
+  var m = $('posMode').value;
+  $('uniformBox').style.display = (m === 'uniform') ? 'block' : 'none';
+  $('customPos').style.display  = (m === 'custom')  ? 'block' : 'none';
+}
+
+/* ================= 主流程 ================= */
+async function doConvert(){
+  if (state.busy) return;
+  var raw = $('inputJson').value.trim();
+  if (!raw){ say('❌ 请先粘贴 JSON 或选择一个 .json 文件', 'err'); return; }
+
+  var src;
+  try { src = JSON.parse(raw); }
+  catch(err){ say('❌ JSON 解析失败：' + esc(err.message) + '<br>提示：确认内容完整、结尾没有被截断。', 'err'); return; }
+  if (!isObj(src)){ say('❌ 顶层不是对象，无法识别为世界书', 'err'); return; }
+
+  var isRikkahub = (src.type === 'lorebook' && isObj(src.data) && Array.isArray(src.data.entries));
+  var isPiuPiu = (src.entries !== undefined);
+  if (!isRikkahub && !isPiuPiu){
+    say('❌ 既没有 <code>entries</code>，也不是 Rikkahub <code>data.entries</code> 结构', 'err'); return;
+  }
+
+  setBusy(true);
+  bar.style.display = 'block'; barFill.style.width = '0%';
+  outputBox.textContent = '正在处理…';
+  reportEl.style.display = 'none';
+
+  try {
+    var opt = readOptions();
+    var t0 = performance.now();
+
+    function onProg(done, total){
+      progress(done, total);
+      if (done < total) say('⏳ 正在处理 ' + done + '/' + total + ' 条…', 'info');
+    }
+
+    var res = isRikkahub
+      ? await normalizeRikkahub(src, opt, onProg)
+      : await convertPiuPiu(src, opt, onProg);
+
+    var str = opt.pretty ? JSON.stringify(res.result, null, 2) : JSON.stringify(res.result);
+    var ms = Math.round(performance.now() - t0);
+    var check = validateResult(res.result);
+
+    state.last = res;
+    state.text = str;
+    state.name = safeName(res.result.data.name) + '.rikkahub.json';
+    barFill.style.width = '100%';
+
+    renderPreview(str);
+    renderReport(res, check, str, ms, isRikkahub, opt);
+
+    say('✅ ' + (isRikkahub ? '规范化' : '转换') + '完成：' + res.stats.out + ' 条，' +
+        (str.length/1024).toFixed(1) + ' KB，用时 ' + ms + ' ms' +
+        (check.errs.length ? ' <b>（校验有异常，见报告）</b>' : '（结构校验通过）'),
+        check.errs.length ? 'warn' : 'ok');
+    setTimeout(function(){ bar.style.display = 'none'; }, 2500);
+  } catch(err){
+    say('❌ 处理失败：' + esc(err.message), 'err');
+    bar.style.display = 'none';
+  } finally {
+    setBusy(false);
+  }
+}
+
+function renderPreview(str){
+  outputBox.textContent = str.length > PREVIEW_LIMIT
+    ? str.slice(0, PREVIEW_LIMIT) + '\n\n……（预览已截断，复制/下载仍是完整内容）'
+    : str;
+  $('previewNote').textContent = str.length > PREVIEW_LIMIT ? '预览截断' : '';
+  $('outMeta').textContent = '输出 ' + (str.length/1024).toFixed(1) + ' KB · ' + state.name;
+}
+
+function renderReport(res, check, str, ms, isRikkahub, opt){
+  var st = res.stats, h = [];
+
+  h.push('<div style="font-weight:700;font-size:.85rem;margin-bottom:4px">📊 ' +
+    (isRikkahub ? '规范化报告' : '转换报告') + '</div><ul>');
+
+  h.push('<li><span class="k">条目：</span>' + st.total + ' 条输入 → <b>' + st.out + '</b> 条输出' +
+    '（启用 ' + st.enabled + ' / 禁用 ' + st.disabled + '）' +
+    (st.skipped ? '，<span class="k">跳过禁用 </span>' + st.skipped + ' 条' : '') + '</li>');
+
+  h.push('<li><span class="k">触发方式：</span>' +
+    '常驻 ' + st.constant + ' · 带关键词 ' + st.keyworded +
+    ' · <b>两者兼具 ' + st.both + '</b>' +
+    ' · 两者皆无 ' + (st.neither ? '<span class="bad">' + st.neither + '</span>' : '0') + '</li>');
+
+  if (st.empty) h.push('<li><span class="k">正文为空：</span>' + st.empty + ' 条（Rikkahub 允许空正文，多用于占位/测试）</li>');
+  if (st.coerced) h.push('<li><span class="k">非整数已取整：</span>' + st.coerced + ' 条（Rikkahub 要求数值字段为整数）</li>');
+
+  h.push('<li><span class="k">position：</span>' +
+    mapText(st.posValues, function(k){ return esc(POS_LABEL[k] || k) + '<span class="k">(' + esc(k) + ')</span>'; }) + '</li>');
+  h.push('<li><span class="k">role：</span>' + mapText(st.roleValues) + '</li>');
+  h.push('<li><span class="k">scanDepth：</span>' + mapText(st.scanValues) + '</li>');
+
+  if (st.repaired){
+    h.push('<li><span class="k">智能修复：</span>' + st.repaired + ' 条 —— ' +
+      esc(st.repairedNames.slice(0,5).join('、')) + (st.repairedNames.length>5?' 等':'') + '</li>');
+  }
+  if (st.templates.length){
+    h.push('<li><span class="k">疑似模板/占位条目：</span>' + esc(st.templates.join('、')) +
+      ' —— 正文含「这里/举例」等占位字样，导入前建议确认</li>');
+  }
+
+  var dupKw = Object.keys(st.kwMap).filter(function(k){ return st.kwMap[k] > 1; })
+    .sort(function(a,b){ return st.kwMap[b] - st.kwMap[a]; });
+  if (dupKw.length){
+    h.push('<li><span class="k">重复关键词（会互相抢触发）：</span>' +
+      dupKw.slice(0,8).map(function(k){ return esc(k)+'×'+st.kwMap[k]; }).join('、') +
+      (dupKw.length>8 ? ' …共'+dupKw.length+'个' : '') + '</li>');
+  }
+  var dupName = Object.keys(st.nameMap).filter(function(k){ return st.nameMap[k] > 1; });
+  if (dupName.length){
+    h.push('<li><span class="k">重名条目：</span>' + dupName.slice(0,6).map(esc).join('、') +
+      (dupName.length>6?' 等':'') + '</li>');
+  }
+
+  /* 顺序提醒 */
+  if (!isRikkahub){
+    var uniqPr = Object.keys(st.prValues).length;
+    var uniqIo = Object.keys(st.ioValues).length;
+    if (opt.prioritySource !== 'insertion_order' && uniqPr === 1 && uniqIo > 1){
+      h.push('<li><span class="bad">⚠️ 顺序提醒：</span>原世界书 <code>priority</code> 只有 1 种取值（' +
+        esc(Object.keys(st.prValues)[0]) + '），但 <code>insertion_order</code> 有 ' + uniqIo +
+        ' 种取值 —— 真正的注入顺序在 insertion_order 里。' +
+        '<button class="btn tiny" data-action="use-io" type="button" style="margin-left:6px">改用 insertion_order 重转</button></li>');
+    } else {
+      h.push('<li><span class="k">priority：</span>' + mapText(st.prValues) +
+        '；<span class="k">insertion_order：</span>' + mapText(st.ioValues) + '</li>');
+    }
+  }
+
+  /* 校验 */
+  if (check.errs.length){
+    h.push('<li><span class="bad">❌ 结构校验未通过：</span><ul>' +
+      check.errs.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></li>');
+  } else {
+    h.push('<li><span class="ok">✅ 结构校验通过</span>：version/type/data 顺序正确，' +
+      check.count + ' 条条目字段齐全（13/13）、顺序一致、类型合法、' +
+      '数值均为整数且在 ±999999999 内、position 与 role 均为实测枚举值</li>');
+  }
+  if (check.warns.length){
+    h.push('<li><span class="k">提示：</span>' + check.warns.map(esc).join('；') + '</li>');
+  }
+
+  h.push('<li><span class="k">未迁移字段：</span>token_budget / token_budget_enabled / global_constant / ' +
+    'secondary_keys / selective / selectiveLogic / probability / sticky / cooldown / group / ' +
+    'excludeRecursion / preventRecursion / triggers / extensions.*（Rikkahub 条目没有对应位）</li>');
+  h.push('</ul>');
+
+  reportEl.innerHTML = h.join('');
+  reportEl.style.display = 'block';
+}
+
+/* 报告内快捷操作 */
+reportEl.addEventListener('click', function(ev){
+  var btn = ev.target.closest ? ev.target.closest('button[data-action]') : null;
+  if (!btn) return;
+  if (btn.getAttribute('data-action') === 'use-io'){
+    $('prioritySource').value = 'insertion_order';
+    say('已切换为 insertion_order，正在重新转换…', 'info');
+    doConvert();
+  }
+});
+
+/* ================= 复制 / 下载 / 分享 ================= */
+function copyOut(){
+  if (!state.text){ say('⚠️ 还没有结果可复制', 'warn'); return; }
+  function done(){ say('✅ 已复制到剪贴板', 'ok'); }
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = state.text;
+    ta.style.position = 'fixed'; ta.style.top = '-1000px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); }
+    catch(e){ say('❌ 复制失败，请长按结果框手动全选复制', 'err'); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(state.text).then(done).catch(fallback);
+  } else fallback();
+}
+function downloadOut(){
+  if (!state.text){ say('⚠️ 还没有结果可下载', 'warn'); return; }
+  var blob = new Blob([state.text], { type: 'application/json;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = state.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  say('✅ 已开始下载：' + esc(state.name), 'ok');
+}
+async function shareOut(){
+  if (!state.text) return;
+  try {
+    var file = new File([state.text], state.name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], title: state.name });
+    } else {
+      await navigator.share({ title: state.name, text: state.text.slice(0, 20000) });
+    }
+  } catch(e){ /* 用户取消 */ }
+}
+
+/* ================= 文件 / 示例 / 清空 ================= */
+$('fileInput').addEventListener('change', function(){
+  var f = this.files && this.files[0];
+  if (!f) return;
+  $('fileName').textContent = f.name + ' · ' + (f.size/1024).toFixed(1) + ' KB';
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var t = String(ev.target.result || '');
+    $('inputJson').value = t;
+    try {
+      var o = JSON.parse(t);
+      var tag = (o && o.type === 'lorebook' && o.data) ? 'Rikkahub 格式 → 将执行规范化+校验'
+              : (o && o.entries !== undefined) ? 'PiuPiu 格式 → 将执行转换'
+              : '未识别的结构';
+      say('✅ 已载入（' + (t.length/1024).toFixed(1) + ' KB）：' + tag, 'ok');
+    } catch(err){
+      say('⚠️ 已载入，但不是合法 JSON：' + esc(err.message), 'warn');
+    }
+  };
+  reader.onerror = function(){ say('❌ 读取文件失败', 'err'); };
+  reader.readAsText(f, 'utf-8');
+});
+
+var SAMPLE = {
+  name: '示例世界书',
+  description: '这里是世界书描述，是可选的。',
+  enabled: true, scan_depth: 10, token_budget: 1536,
+  token_budget_enabled: false, global_constant: false,
+  entries: [
+    {
+      comment: '[角色]示例少女', name: '[角色]示例少女',
+      content: '示例少女:\n    年龄: 18\n    身份:\n      公开: 高中生\n      隐藏: 机械师',
+      enabled: true, constant: false, keys: ['示例少女','小示'],
+      position: 'before_character_definition', use_regex: false, depth: 4,
+      insertion_order: 100, extensions: { position: 0, depth: 4, case_sensitive: null }
+    },
+    {
+      comment: '世界观/总纲', name: '世界观/总纲',
+      content: '世界观总纲:\n  - 背景: 近未来都市\n  - 规则: 逻辑优先',
+      enabled: true, constant: true, keys: [],
+      position: 'after_character_definition', use_regex: false, depth: 4,
+      insertion_order: 2, extensions: { position: 4, depth: 4 }
+    },
+    {
+      comment: '常驻但带关键词（对齐实测条目3）', name: '常驻+关键词测试',
+      content: '本条目开启了常驻激活，并使用了关键词。',
+      enabled: true, constant: true, keys: ['注意，这里是关键词。'],
+      position: 'after_character_definition', use_regex: false, depth: 4,
+      insertion_order: 5, extensions: { position: 4, depth: 4 }
+    },
+    {
+      comment: '在深度条目', name: '定时提醒/感染倒计时',
+      content: '感染倒计时提醒:\n  - 伤口已经发黑。\n  - 她不会主动说。',
+      enabled: true, constant: true, keys: [],
+      position: 'at_depth', use_regex: false, depth: 2,
+      insertion_order: 7, extensions: { position: 4, depth: 2 }
+    },
+    {
+      comment: '', name: 'Entry 5',
+      content: '{"name":"反上帝模式","content":"禁止全知视角……","keys":["视角限制"],"enabled":true,"position":"after","constant":true}',
+      enabled: true, constant: true, keys: [],
+      position: 'after_character_definition', use_regex: false, depth: 4,
+      insertion_order: 0, extensions: { position: 4, depth: 4 }
+    }
+  ]
+};
+
+$('sampleBtn').addEventListener('click', function(){
+  $('inputJson').value = JSON.stringify(SAMPLE, null, 2);
+  $('fileName').textContent = '（示例数据）';
+  say('✅ 已载入示例（含换行保留 / 常驻+关键词 / at_depth / 脏数据修复），点「转换」', 'ok');
+});
+$('clearBtn').addEventListener('click', function(){
+  $('inputJson').value = '';
+  $('fileInput').value = '';
+  $('fileName').textContent = '未选择文件';
+  state.text = ''; state.last = null; state.name = 'rikkahub_worldbook.json';
+  outputBox.textContent = '等待转换…';
+  $('outMeta').textContent = '等待转换…';
+  $('previewNote').textContent = '';
+  reportEl.style.display = 'none';
+  statusEl.className = 'status';
+  bar.style.display = 'none'; barFill.style.width = '0%';
+});
+
+/* ================= 事件绑定 ================= */
+$('posMode').addEventListener('change', syncPosBoxes);
+$('convertBtn').addEventListener('click', doConvert);
+$('copyBtn').addEventListener('click', copyOut);
+$('downloadBtn').addEventListener('click', downloadOut);
+if (navigator.share){
+  $('shareBtn').style.display = 'inline-flex';
+  $('shareBtn').addEventListener('click', shareOut);
+}
+$('inputJson').addEventListener('keydown', function(e){
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); doConvert(); }
+});
+
+/* ================= 初始化 ================= */
+fillPositionSelects();
+syncPosBoxes();
+if (!$('inputJson').value){
+  $('inputJson').value = JSON.stringify(SAMPLE, null, 2);
+  $('fileName').textContent = '（示例数据）';
+}
+
+})();
+</script>
+</body>
+</html>
