@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 · 页面走丢了 | GLNB 的小站</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at 50% 0%, #1d2536 0%, #0d1117 60%);
+      color: #e6edf3;
+      font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", sans-serif;
+      text-align: center; padding: 24px;
+    }
+    .card { max-width: 460px; width: 100%; }
+    .code {
+      font-size: 96px; font-weight: 800; line-height: 1;
+      background: linear-gradient(135deg, #f0a05a, #e2683c);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; margin: 0 0 8px;
+    }
+    h1 { font-size: 20px; font-weight: 600; margin: 0 0 12px; }
+    p { color: #9aa7b8; font-size: 14px; line-height: 1.7; margin: 0 0 24px; }
+    .path {
+      display: inline-block; margin-top: 6px; padding: 2px 8px;
+      border-radius: 6px; background: #1c2331; color: #c3ccd9;
+      font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+      word-break: break-all;
+    }
+    .btn {
+      display: inline-block; padding: 11px 24px; border-radius: 10px;
+      background: linear-gradient(135deg, #f0a05a, #e2683c);
+      color: #10141c; font-weight: 700; font-size: 14px;
+      text-decoration: none; transition: transform .15s, box-shadow .15s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(226,104,60,.35); }
+    .home { display: block; margin-top: 18px; font-size: 13px; color: #7d8b9e; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="code">404</div>
+    <h1>这个页面不存在</h1>
+    <p>
+      你要找的内容可能被移动、改名，或者链接打错了。
+      <br>
+      <span class="path" id="path"></span>
+    </p>
+    <a class="btn" href="/">← 返回首页</a>
+    <a class="home" href="/">glnb.abrdns.com</a>
+  </div>
+  <script>
+    var p = location.pathname + location.search;
+    document.getElementById('path').textContent = p.length > 60 ? p.slice(0, 60) + '…' : p;
+  </script>
+</body>
+</html>
